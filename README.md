@@ -53,7 +53,7 @@ You can jump straight to the folder:
    ```
 3. Open the folder named with your **Steam ID 64**, then find `Profile.json`.
 
-> Replace `<YourSteamID>` with the numeric ID folder you see in that directory (e.g. `76561198027894420`).
+> Replace `<YourSteamID>` with the numeric ID folder you see in that directory (e.g. `76561234567890123`).
 
 ---
 
