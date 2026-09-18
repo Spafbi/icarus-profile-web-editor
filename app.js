@@ -11,12 +11,11 @@
   var CURRENCY_MAP = {
     Credits: "Ren",
     Exotic1: "Exotics",
-    Refund: "Respec Point",
     Exotic_Red: "Red Exotics",
     Biomass: "Legendary Biomass",
-    Exotic_Uranium: "Uranium Rod",
-    Licence: "Legendary Licence",
-    Biomass_Converter: "Flux"
+    Licence: "Legendary Licences",
+    Exotic_Uranium: "Uranium Rods",
+    Refund: "Respec Points"
   };
 
   var EXPORT_FILENAME = "Profile.json";

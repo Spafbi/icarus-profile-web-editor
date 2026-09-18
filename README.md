@@ -30,7 +30,6 @@ Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework,
 | `Biomass`            | Legendary Biomass     |
 | `Exotic_Uranium`     | Uranium Rod           |
 | `Licence`            | Legendary Licence     |
-| `Biomass_Converter`  | Flux                  |
 
 ---
 
