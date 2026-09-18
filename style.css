@@ -220,6 +220,19 @@ code {
 .status-ok { color: var(--ok); }
 .status-error { color: var(--error); }
 
+/* ---------- Save-file location hint ---------- */
+.save-hint {
+  margin: 14px 2px 0; max-width: 74ch;
+  font-size: 0.86rem; line-height: 1.65; color: var(--text-dim);
+}
+.save-hint strong { color: var(--text); }
+.save-hint code { overflow-wrap: anywhere; }
+kbd {
+  font-family: var(--mono); font-size: 0.82em; color: var(--text);
+  background: var(--panel-2); border: 1px solid var(--border); border-bottom-width: 2px;
+  border-radius: 5px; padding: 0.08em 0.4em;
+}
+
 /* ---------- Editor head ---------- */
 .editor-head {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
