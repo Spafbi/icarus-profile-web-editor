@@ -1,11 +1,14 @@
 # ICARUS Profile Editor
 
-A lightweight, **100% client-side** web app for editing [ICARUS](https://www.icarusgame.com/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — right in your browser.
+A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — right in your browser.
 
 Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework, no backend.
 
-> [!IMPORTANT]
+# IMPORTANT 
 > This is an **unofficial fan project**. It is **not** associated with, sponsored by, or endorsed by RocketWerkz. All game assets and trademarks belong to RocketWerkz.
+
+## A quick word of caution
+To preserve the intended experience, **consider saving this tool for bug recovery or post-game convenience**. If you've already conquered the content and just want to bypass tedious grinding, it’s a great time-saver—**otherwise, it can easily take the fun out of early progression**.
 
 ---
 
