@@ -316,6 +316,10 @@ kbd {
   border-top: 1px solid var(--border); background: rgba(10, 13, 18, 0.7);
   padding: 20px clamp(16px, 5vw, 44px) 28px; text-align: center;
 }
+.caution {
+  margin: 0 auto 12px; max-width: 62ch; font-size: 0.86rem; line-height: 1.6; color: var(--text-dim);
+}
+.caution strong { color: var(--text); }
 .disclaimer {
   margin: 0 auto 8px; max-width: 70ch; font-size: 0.82rem; color: var(--text-dim);
 }
