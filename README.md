@@ -25,11 +25,11 @@ Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework,
 | -------------------- | --------------------- |
 | `Credits`            | Ren                   |
 | `Exotic1`            | Exotics               |
-| `Refund`             | Respec Point          |
-| `Exotic_Red`         | Red Exotics           |
+| `Exotic_Red`         | Stabilized Exotic     |
 | `Biomass`            | Legendary Biomass     |
-| `Exotic_Uranium`     | Uranium Rod           |
 | `Licence`            | Legendary Licence     |
+| `Exotic_Uranium`     | Uranium Rod           |
+| `Refund`             | Respec Points         |
 
 ---
 

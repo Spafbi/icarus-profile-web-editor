@@ -11,10 +11,10 @@
   var CURRENCY_MAP = {
     Credits: "Ren",
     Exotic1: "Exotics",
-    Exotic_Red: "Red Exotics",
+    Exotic_Red: "Stabilized Exotic",
     Biomass: "Legendary Biomass",
     Licence: "Legendary Licences",
-    Exotic_Uranium: "Uranium Rods",
+    Exotic_Uranium: "Uranium Rod",
     Refund: "Respec Points"
   };
 
