@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="A lightweight, 100% client-side editor for ICARUS Profile.json save files. Modify meta-resources (Ren, Exotics, and more) entirely in your browser — no server, no upload."
+  />
+  <meta name="color-scheme" content="dark" />
+  <title>ICARUS Profile Editor</title>
+
+  <link rel="icon" type="image/png" href="assets/icon.png" />
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Roboto+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <noscript>
+    <div class="noscript-banner">
+      This editor requires JavaScript. Please enable it in your browser to continue.
+    </div>
+  </noscript>
+
+  <header class="site-header">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <span class="brand-icon-fallback">IC</span>
+        <img src="assets/icon.png" alt="" onload="this.parentElement.classList.add('img-ok')" onerror="this.remove()" />
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">ICARUS Profile Editor</h1>
+        <p class="brand-subtitle">Client-Side Meta-Resource Modifier</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ============ UPLOAD ============ -->
+    <section class="panel dropzone-panel" aria-labelledby="upload-heading">
+      <h2 id="upload-heading" class="panel-title">Load Profile Save</h2>
+
+      <div
+        id="dropzone"
+        class="dropzone"
+        role="button"
+        tabindex="0"
+        aria-label="Upload a Profile.json file. Press Enter to browse."
+      >
+        <input type="file" id="file-input" accept=".json,application/json" hidden />
+
+        <div class="dropzone-inner">
+          <svg
+            class="dropzone-icon"
+            width="46"
+            height="46"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 16V4" />
+            <path d="m7 9 5-5 5 5" />
+            <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+          </svg>
+          <p class="dropzone-lead">
+            <strong>Drop</strong> your <code>Profile.json</code> here, or
+          </p>
+          <button type="button" id="browse-btn" class="btn btn-primary">Browse File</button>
+        </div>
+      </div>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+    </section>
+
+    <!-- ============ EDITOR ============ -->
+    <section
+      class="panel editor-panel is-hidden"
+      aria-labelledby="edit-heading"
+    >
+      <div class="editor-head">
+        <h2 id="edit-heading" class="panel-title">Edit Meta-Resources</h2>
+        <div id="file-chip" class="file-chip" aria-live="polite"></div>
+      </div>
+
+      <div id="currency-grid" class="currency-grid"></div>
+
+      <div class="export-bar">
+        <div class="export-hints">
+          <p class="export-hint">
+            Changes stay on this machine. Only
+            <code>MetaResources</code> are modified — every other save value
+            (talents, flags, stats, slots) is preserved exactly as loaded.
+          </p>
+          <p class="export-hint">
+            To apply it, overwrite your original <code>Profile.json</code> with
+            the downloaded file while <strong>ICARUS is running and on the title
+            screen</strong>. The game doesn't lock the file, so you don't need
+            to close or restart it.
+          </p>
+        </div>
+        <button id="download-btn" class="btn btn-download" disabled>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 3v12" />
+            <path d="m7 10 5 5 5-5" />
+            <path d="M5 21h14" />
+          </svg>
+          <span>Download Profile.json</span>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="disclaimer">
+      This profile editor is an unofficial fan project and is not associated
+      with, sponsored by, or endorsed by RocketWerkz. All game assets and
+      trademarks belong to RocketWerkz.
+    </p>
+    <p class="fineprint">100% client-side · your save file never leaves your browser.</p>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="assertive"></div>
+</body>
+</html>
