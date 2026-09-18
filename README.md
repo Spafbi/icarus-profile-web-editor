@@ -86,13 +86,8 @@ icarus-profile-web-editor/
 ├── style.css         # Icarus-themed, responsive styling
 ├── app.js            # File reading, parsing, validation, editing, export
 ├── README.md         # This file
-├── assets/
-│   └── icon.png      # (optional) square app icon / tab favicon
-└── references/       # (dev reference only — not used by the app)
-    ├── Profile.json                      # sample save
-    ├── icarus_missions_list.csv
-    ├── icarus_all_missions_complete.csv
-    └── UnlockedFlags.csv
+└── assets/
+    └── icon.png      # (optional) square app icon / tab favicon
 ```
 
 ### Adding the app icon
