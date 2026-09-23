@@ -373,6 +373,29 @@ kbd {
 .toggle-desc { font-size: 0.9rem; color: var(--text); }
 .toggle-row:not(.is-on) .toggle-desc { color: var(--text-dim); }
 
+/* ---------- Completed Missions (map groups) ---------- */
+.map-group { margin-bottom: 22px; }
+.map-group-title {
+  margin: 0 0 10px; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.map-group-count { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: none; color: var(--text-dim); }
+.missions-empty {
+  font-size: 0.85rem; color: var(--text-dim); padding: 10px 12px;
+  border: 1px dashed var(--border); border-radius: var(--radius-sm);
+}
+.mission-rewards { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.mission-reward {
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.02em;
+  color: var(--text-dim); background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-soft); border-radius: 999px; padding: 3px 9px;
+}
+.toggle-row.is-on .mission-reward {
+  color: var(--cyan); border-color: rgba(0, 229, 255, 0.3);
+  background: rgba(0, 229, 255, 0.06);
+}
+
 /* ---------- Export bar ---------- */
 .export-bar {
   margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border);

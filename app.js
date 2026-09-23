@@ -15,7 +15,9 @@
   // ---- External data files (fetched at startup) ----
   var DATA_FILES = {
     currencyMap: "data/currency_map.json",
-    generalAccountUnlocks: "data/general_account_unlocks.json"
+    generalAccountUnlocks: "data/general_account_unlocks.json",
+    unlockedFlags: "data/unlocked_flags.json",
+    missions: "data/missions.json"
   };
 
   // ---- Toggle section registry ----
@@ -45,6 +47,10 @@
   var fileName = "";
   var originalCounts = {};
   var originalUnlockedFlags = [];
+  // Sorted signature of the talent RowNames present at load, used to detect
+  // "unsaved changes" made by the Completed Missions toggles (which may alter
+  // Talents without touching any other list).
+  var originalTalentSignature = "";
   var loaded = false;
   var toastTimer = null;
 
@@ -52,6 +58,9 @@
   var currencyMap = null;
   var dataSources = {};
   var appReady = false;
+  // Map of unlock-flag value -> human-readable description, built from
+  // data/unlocked_flags.json (talent -> rewards) at startup.
+  var flagDescriptions = {};
 
   // ---- DOM refs ----
   var dropzone = document.getElementById("dropzone");
@@ -62,6 +71,7 @@
   var fileChip = document.getElementById("file-chip");
   var currencyGrid = document.getElementById("currency-grid");
   var toggleSectionsEl = document.getElementById("toggle-sections");
+  var missionsEl = document.getElementById("missions-section");
   var downloadBtn = document.getElementById("download-btn");
   var toastEl = document.getElementById("toast");
 
@@ -121,6 +131,12 @@
     if (flags.length !== originalUnlockedFlags.length) return true;
     for (var f = 0; f < flags.length; f++) {
       if (flags[f] !== originalUnlockedFlags[f]) return true;
+    }
+
+    // Talents: a mission toggle may add/remove RowName entries without
+    // touching any other list, so compare the set of RowNames too.
+    if (talentRowNames().slice().sort().join("\u0000") !== originalTalentSignature) {
+      return true;
     }
     return false;
   }
@@ -237,8 +253,25 @@
   }
 
   /* ---------- Unlock flags ---------- */
+  // Build a map of unlock-flag value -> human-readable description from the
+  // unlocked-flags catalogue (data/unlocked_flags.json: talent -> rewards).
+  function buildFlagDescriptions() {
+    var map = {};
+    var source = dataSources.unlockedFlags || {};
+    var arr = Array.isArray(source.unlocked_flags) ? source.unlocked_flags : [];
+    for (var i = 0; i < arr.length; i++) {
+      var e = arr[i];
+      if (!e) continue;
+      var key = Number(e.talent);
+      if (isFinite(key) && typeof e.rewards === "string" && e.rewards) {
+        map[key] = e.rewards;
+      }
+    }
+    return map;
+  }
+
   function getFlagValue(item, section) {
-    var raw = item && item[section.valueKey];
+    var raw = (item && typeof item === "object") ? item[section.valueKey] : item;
     var n = Number(raw);
     return isFinite(n) ? n : null;
   }
@@ -249,6 +282,44 @@
       if (profileData.UnlockedFlags[i] === value) return true;
     }
     return false;
+  }
+
+  /* ---------- Talents (Completed Missions) ---------- */
+  // The set of talent RowNames currently present in the profile.
+  function talentRowNames() {
+    if (!profileData || !Array.isArray(profileData.Talents)) return [];
+    var names = [];
+    for (var i = 0; i < profileData.Talents.length; i++) {
+      var t = profileData.Talents[i];
+      if (t && typeof t.RowName === "string" && t.RowName) names.push(t.RowName);
+    }
+    return names;
+  }
+
+  function isTalentPresent(rowName) {
+    if (!profileData || !Array.isArray(profileData.Talents)) return false;
+    for (var i = 0; i < profileData.Talents.length; i++) {
+      if (profileData.Talents[i] && profileData.Talents[i].RowName === rowName) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Add or remove a talent ({ Rank: 1, RowName }) in the profile's Talents
+  // list. Rank is always 1 for these RowNames, matching an unmodified save.
+  function setTalent(rowName, enabled) {
+    if (!profileData) return;
+    if (!Array.isArray(profileData.Talents)) profileData.Talents = [];
+    var talents = profileData.Talents;
+    if (enabled) {
+      if (isTalentPresent(rowName)) return;
+      talents.push({ RowName: rowName, Rank: 1 });
+    } else {
+      for (var i = talents.length - 1; i >= 0; i--) {
+        if (talents[i] && talents[i].RowName === rowName) talents.splice(i, 1);
+      }
+    }
   }
 
   function setFlagUnlocked(value, enabled) {
@@ -280,6 +351,94 @@
     }
   }
 
+  /* ---------- Completed Missions catalogue ---------- */
+  // Build the mission list grouped by map, sorted by map_display_weights
+  // (ascending). Entries sharing the same (map, talent RowName) are collapsed
+  // into one toggle: the first-seen mission name is kept and their UnlockedFlags
+  // are unioned, since the toggle state is driven by the RowName.
+  function buildMissionGroups() {
+    var source = dataSources.missions || {};
+    var weights = source.map_display_weights || {};
+    var items = Array.isArray(source.mission_talents) ? source.mission_talents : [];
+
+    var mapToTalents = {};
+    var mapFirstSeen = {};
+    var mapSeq = 0;
+
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (!it || typeof it !== "object") continue;
+      var map = it.map;
+      var talent = it.talent;
+      if (typeof map !== "string" || !map) continue;
+      if (typeof talent !== "string" || !talent) continue;
+      if (!mapToTalents[map]) {
+        mapToTalents[map] = {};
+        mapFirstSeen[map] = ++mapSeq;
+      }
+      var bucket = mapToTalents[map];
+      if (!bucket[talent]) bucket[talent] = { name: "", flags: {} };
+      var entry = bucket[talent];
+      if (!entry.name && typeof it.mission === "string" && it.mission) {
+        entry.name = it.mission;
+      }
+      if (Array.isArray(it.UnlockedFlags)) {
+        for (var f = 0; f < it.UnlockedFlags.length; f++) {
+          var n = Number(it.UnlockedFlags[f]);
+          if (isFinite(n)) entry.flags[n] = true;
+        }
+      }
+    }
+
+    var mapNames = Object.keys(mapToTalents);
+    mapNames.sort(function (a, b) {
+      var wa = isFinite(Number(weights[a])) ? Number(weights[a]) : Infinity;
+      var wb = isFinite(Number(weights[b])) ? Number(weights[b]) : Infinity;
+      if (wa !== wb) return wa - wb;
+      return mapFirstSeen[a] - mapFirstSeen[b];
+    });
+
+    var groups = [];
+    for (var g = 0; g < mapNames.length; g++) {
+      var mapName = mapNames[g];
+      var bucket2 = mapToTalents[mapName];
+      var missions = [];
+      var talents = Object.keys(bucket2);
+      for (var t = 0; t < talents.length; t++) {
+        var talentName = talents[t];
+        var e = bucket2[talentName];
+        var flags = Object.keys(e.flags)
+          .map(Number)
+          .sort(function (a, b) { return a - b; });
+        missions.push({ name: e.name || talentName, talent: talentName, flags: flags });
+      }
+      groups.push({ map: mapName, missions: missions });
+    }
+    return groups;
+  }
+
+  // Resolve a mission's numeric unlock flags to a flat list of reward
+  // descriptions. Each flag's `rewards` text is split on commas so multi-item
+  // rewards (e.g. "Caveworm Knife, Caveworm Spear") read as separate chips.
+  function missionRewardList(flags) {
+    var out = [];
+    for (var i = 0; i < flags.length; i++) {
+      var text = flagDescriptions[flags[i]];
+      if (typeof text !== "string" || !text) continue;
+      var parts = text.split(",");
+      for (var p = 0; p < parts.length; p++) {
+        var part = parts[p].replace(/^\s+|\s+$/g, "");
+        if (part) out.push(part);
+      }
+    }
+    return out;
+  }
+
+  // Escape an arbitrary string (map name / RowName) for use inside a DOM id.
+  function escapeId(s) {
+    return String(s).replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  }
+
   function onToggleChange(e) {
     var input = e.target;
     if (!input || input.type !== "checkbox") return;
@@ -288,6 +447,107 @@
     setFlagUnlocked(value, input.checked);
     var row = input.closest(".toggle-row");
     if (row) row.classList.toggle("is-on", input.checked);
+  }
+
+  function renderCompletedMissions() {
+    if (!missionsEl) return;
+    missionsEl.textContent = "";
+
+    var groups = buildMissionGroups();
+    if (!groups.length) {
+      missionsEl.appendChild(
+        makeElement("div", {
+          "class": "missions-empty",
+          text: "No missions catalogued yet (data/missions.json has no entries)."
+        })
+      );
+      return;
+    }
+
+    for (var g = 0; g < groups.length; g++) {
+      var group = groups[g];
+      var mapBlock = makeElement("div", { "class": "map-group" });
+      mapBlock.setAttribute("data-map", group.map);
+
+      var completed = 0;
+      for (var m = 0; m < group.missions.length; m++) {
+        if (isTalentPresent(group.missions[m].talent)) completed++;
+      }
+
+      var title = makeElement("h4", { "class": "map-group-title", text: group.map });
+      title.appendChild(
+        makeElement("span", {
+          "class": "map-group-count",
+          text: completed + " of " + group.missions.length + " completed"
+        })
+      );
+      mapBlock.appendChild(title);
+
+      var list = makeElement("div", { "class": "toggle-list" });
+      for (var i = 0; i < group.missions.length; i++) {
+        var mission = group.missions[i];
+        var checked = isTalentPresent(mission.talent);
+        var rowId = "mission-" + escapeId(group.map) + "-" + escapeId(mission.talent);
+        var row = makeElement("label", {
+          "class": "toggle-row" + (checked ? " is-on" : ""),
+          "for": rowId
+        });
+
+        var input = makeElement("input", {
+          id: rowId,
+          "class": "toggle-input",
+          type: "checkbox"
+        });
+        input.checked = checked;
+        input.setAttribute("data-mission-talent", mission.talent);
+        input.setAttribute("data-mission-flags", mission.flags.join(","));
+        row.appendChild(input);
+        row.appendChild(
+          makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
+        );
+
+        var text = makeElement("span", { "class": "toggle-text" });
+        text.appendChild(
+          makeElement("span", { "class": "toggle-desc", text: mission.name })
+        );
+
+        var rewards = missionRewardList(mission.flags);
+        if (rewards.length) {
+          var rewardsEl = makeElement("span", { "class": "mission-rewards" });
+          for (var r = 0; r < rewards.length; r++) {
+            rewardsEl.appendChild(
+              makeElement("span", { "class": "mission-reward", text: rewards[r] })
+            );
+          }
+          text.appendChild(rewardsEl);
+        }
+        row.appendChild(text);
+        list.appendChild(row);
+      }
+      mapBlock.appendChild(list);
+      missionsEl.appendChild(mapBlock);
+    }
+  }
+
+  // One delegated handler for all Completed Missions toggles. Marking a
+  // mission completed adds its talent RowName to Talents and its numeric
+  // flags to UnlockedFlags; unmarking removes both.
+  function onMissionToggleChange(e) {
+    var input = e.target;
+    if (!input || input.type !== "checkbox") return;
+    if (!input.hasAttribute("data-mission-talent")) return;
+    var talent = input.getAttribute("data-mission-talent");
+    var enabled = input.checked;
+
+    setTalent(talent, enabled);
+    var flagParts = (input.getAttribute("data-mission-flags") || "").split(",").filter(Boolean);
+    for (var i = 0; i < flagParts.length; i++) {
+      var n = Number(flagParts[i]);
+      if (isFinite(n)) setFlagUnlocked(n, enabled);
+    }
+
+    var row = input.closest(".toggle-row");
+    if (row) row.classList.toggle("is-on", enabled);
   }
 
   function renderToggleSections() {
@@ -338,7 +598,12 @@
         );
 
         var text = makeElement("span", { "class": "toggle-text" });
-        var desc = item[section.descriptionKey];
+        // Prefer the description looked up from data/unlocked_flags.json;
+        // fall back to the item's own description (older object format).
+        var desc = flagDescriptions[value];
+        if (!desc && item && typeof item === "object") {
+          desc = item[section.descriptionKey];
+        }
         text.appendChild(
           makeElement("span", {
             "class": "toggle-desc",
@@ -485,18 +750,24 @@
       data.UnlockedFlags = [];
     }
     originalUnlockedFlags = data.UnlockedFlags.slice();
+    // Snapshot the talent RowNames so the "unsaved changes" check covers edits
+    // made through the Completed Missions toggles.
+    originalTalentSignature = talentRowNames().slice().sort().join("\u0000");
     loaded = true;
 
     renderCurrencyCards();
     renderToggleSections();
+    renderCompletedMissions();
     editorPanel.classList.remove("is-hidden");
     downloadBtn.disabled = false;
 
     var userId = typeof data.UserID === "string" ? data.UserID : "";
+    var talentCount = Array.isArray(data.Talents) ? data.Talents.length : 0;
     fileChip.textContent = [
       name || "Profile.json",
       userId ? "UserID " + userId : "",
       data.MetaResources.length + " meta-resource row(s)",
+      talentCount + " talent(s)",
       data.UnlockedFlags.length + " unlocked flag(s)"
     ]
       .filter(Boolean)
@@ -551,6 +822,7 @@
     )
       .then(function () {
         currencyMap = dataSources.currencyMap || {};
+        flagDescriptions = buildFlagDescriptions();
         appReady = true;
         setStatus(
           "Ready. Drop a Profile.json to begin " +
@@ -624,6 +896,11 @@
     // Toggle switches (unlock flags) — one delegated listener.
     if (toggleSectionsEl) {
       toggleSectionsEl.addEventListener("change", onToggleChange);
+    }
+
+    // Completed Missions toggles — separate delegated listener.
+    if (missionsEl) {
+      missionsEl.addEventListener("change", onMissionToggleChange);
     }
 
     // Fetch the external catalogues from data/.
