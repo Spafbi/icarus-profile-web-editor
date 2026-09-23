@@ -1,0 +1,37 @@
+{
+    "Credits": {
+        "name": "Ren",
+        "addStep": 10000,
+        "setMax": 999999
+    },
+    "Exotic1": {
+        "name": "Exotics",
+        "addStep": 10000,
+        "setMax": 999999
+    },
+    "Exotic_Red": {
+        "name": "Stabilized Exotic",
+        "addStep": 10000,
+        "setMax": 999999
+    },
+    "Biomass": {
+        "name": "Legendary Biomass",
+        "addStep": 10000,
+        "setMax": 999999
+    },
+    "Licence": {
+        "name": "Legendary Licences",
+        "addStep": 10,
+        "setMax": 500
+    },
+    "Exotic_Uranium": {
+        "name": "Uranium Rod",
+        "addStep": 10000,
+        "setMax": 999999
+    },
+    "Refund": {
+        "name": "Respec Points",
+        "addStep": 10,
+        "setMax": 500
+    }
+}

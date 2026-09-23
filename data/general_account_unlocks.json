@@ -1,0 +1,16 @@
+{
+    "UnlockedFlags": [
+        {
+            "description": "Level 10 Boost Consumed (Styx)",
+            "unlock_flag_value": 3
+        },
+        {
+            "description": "Level 20 Boost Consumed (Promethius)",
+            "unlock_flag_value": 4
+        },
+        {
+            "description": "Level 30 Boost Consumed (Elysium)",
+            "unlock_flag_value": 95
+        }
+    ]
+}
