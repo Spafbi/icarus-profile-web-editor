@@ -1,6 +1,6 @@
 # ICARUS Profile Editor
 
-A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — right in your browser.
+A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — and **toggle account unlock flags** right in your browser. Mission and workshop unlock editing is on the roadmap.
 
 Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework, no backend.
 
@@ -17,22 +17,44 @@ To preserve the intended experience, **consider saving this tool for bug recover
 - **Local-only / private.** Everything runs in your browser using the `FileReader` API. Your save file is **never uploaded** anywhere.
 - **Drag & drop** or a traditional **file picker** to load a `Profile.json`.
 - **Safe validation.** The file is checked to be valid JSON and to contain the required `MetaResources` array, with clear, friendly error messages otherwise.
-- **Full state preservation.** The whole file is parsed into memory and only the `Count` values inside `MetaResources` are ever modified. Talents, `UnlockedFlags`, `UserID`, `NextChrSlot`, `DataVersion`, and everything else pass through **unmodified**.
+- **Full state preservation.** The whole file is parsed into memory and only the values you edit are ever modified: `Count` values inside `MetaResources` and entries in the `UnlockedFlags` list. Talents, `UserID`, `NextChrSlot`, `DataVersion`, and everything else pass through **unmodified**.
 - **Missing currencies are handled.** Any supported currency absent from your file is displayed as `0` and is injected (with the value you set) the moment you edit it.
-- **Quick tools.** Each currency has `+10,000`, `Set 999,999`, and `Reset` helpers.
+- **Quick tools.** Each currency has `+N`, `Set N`, and `Reset` helpers, where `N` is per-currency in `data/currency_map.json` (defaults: +10,000 / Set 999,999).
+- **Unlock flag toggles.** A list of known general account unlocks, each with a human-readable description. Toggling a flag on adds its `unlock_flag_value` to `UnlockedFlags` (inserted at its sorted position); toggling it off removes it. Flags present in your file but absent from the catalogue are preserved untouched.
+- **Data-driven catalogues.** Currency names and the unlock list live in external JSON files under `data/`, so entries can be added or removed per game update without touching the app code.
 - **Exact export.** Downloads a `Profile.json` (case-sensitive) serialized with 2-space indentation.
 
 ### Supported currencies
 
-| Internal `MetaRow`   | In-game display name  |
-| -------------------- | --------------------- |
-| `Credits`            | Ren                   |
-| `Exotic1`            | Exotics               |
-| `Exotic_Red`         | Stabilized Exotic     |
-| `Biomass`            | Legendary Biomass     |
-| `Licence`            | Legendary Licence     |
-| `Exotic_Uranium`     | Uranium Rod           |
-| `Refund`             | Respec Points         |
+| Internal `MetaRow`   | In-game display name  | Increment | Set value |
+| -------------------- | --------------------- | --------- | --------- |
+| `Credits`            | Ren                   | +10,000   | 999,999   |
+| `Exotic1`            | Exotics               | +10,000   | 999,999   |
+| `Exotic_Red`         | Stabilized Exotic     | +10,000   | 999,999   |
+| `Biomass`            | Legendary Biomass     | +10,000   | 999,999   |
+| `Licence`            | Legendary Licence     | +10       | 500       |
+| `Exotic_Uranium`     | Uranium Rod           | +10,000   | 999,999   |
+| `Refund`             | Respec Points         | +10       | 500       |
+
+### Known unlock flags
+
+From `data/general_account_unlocks.json` (add or remove entries here as the game evolves):
+
+| `unlock_flag_value` | Effect                                              |
+| ------------------- | --------------------------------------------------- |
+| `3`                 | Level 10 Boost Consumed (Styx Map Selection)        |
+| `4`                 | Level 20 Boost Consumed (Promethius Map Selection)  |
+| `95`                | Level 30 Boost Consumed (Elysium Map Selection)     |
+
+---
+
+## Keeping the catalogues up to date
+
+All user-facing value lists are external JSON files in `data/` — **edit them, commit, and push; no code changes needed.**
+
+- **`data/currency_map.json`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `10000` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
+- **`data/general_account_unlocks.json`** — the toggle list shown under *Account Unlocks*. Each item needs a `description` and an integer `unlock_flag_value` matching a value in your profile's `UnlockedFlags` array. Add entries as new flags are identified; remove entries for flags the game has retired.
+- **Future catalogues** (missions, workshop unlocks, talents) will follow the same pattern: a JSON file under `data/` plus a small registration entry in `app.js`.
 
 ---
 
@@ -65,7 +87,7 @@ You can jump straight to the folder:
 
 - Copy the file somewhere safe (or rename it to `Profile.json.bak`) **before** you replace it with the edited version.
 - ICARUS does **not** lock `Profile.json`. Keep the game **running and on the title screen** when you overwrite the file — there's no need to close or restart it.
-- While this editor only touches `MetaResources` and preserves everything else, a manual backup is still strongly recommended in case anything goes wrong.
+- While this editor only touches `MetaResources` and `UnlockedFlags` and preserves everything else, a manual backup is still strongly recommended in case anything goes wrong.
 
 ### Workflow
 
@@ -82,13 +104,18 @@ You can jump straight to the folder:
 
 ```
 icarus-profile-web-editor/
-├── index.html        # Semantic HTML5 layout (dropzone, currency cards, export)
+├── index.html        # Semantic HTML5 layout (dropzone, editor sections, export)
 ├── style.css         # Icarus-themed, responsive styling
 ├── app.js            # File reading, parsing, validation, editing, export
 ├── README.md         # This file
-└── assets/
-    └── icon.png      # (optional) square app icon / tab favicon
+├── assets/
+│   └── icon.png      # (optional) square app icon / tab favicon
+└── data/
+    ├── currency_map.json           # name / addStep / setMax per currency
+    └── general_account_unlocks.json # Unlock flag catalogue (Account Unlocks)
 ```
+
+> `data/` holds only **catalogue metadata** — the player's `Profile.json` is always uploaded at runtime and never stored in the repository.
 
 ### Adding the app icon
 
@@ -137,7 +164,9 @@ That's it — no build tools, no CI, no server required.
 
 ## Technical notes
 
-- **State preservation:** the file is loaded with `JSON.parse`, held as a single in-memory object, and only `MetaResources` entries are mutated. Export is `JSON.stringify(data, null, 2)`.
-- **Injection:** a missing `MetaRow` is appended to `MetaResources` as `{ "MetaRow": "<key>", "Count": <value> }` on first edit.
-- **Validation:** rejects non-JSON input, non-object roots, a missing `MetaResources` array, and malformed array entries — each with a specific message.
-- **Privacy:** no network calls beyond the Google Fonts stylesheet; the save file is never transmitted.
+- **State preservation:** the file is loaded with `JSON.parse`, held as a single in-memory object, and only `MetaResources` counts and `UnlockedFlags` entries are mutated. Export is `JSON.stringify(data, null, 2)`.
+- **Injection:** a missing `MetaRow` is appended to `MetaResources` as `{ "MetaRow": "<key>", "Count": <value> }` on first edit. A flag toggled on is inserted into `UnlockedFlags` at its sorted (ascending) position.
+- **Validation:** rejects non-JSON input, non-object roots, a missing `MetaResources` array, and malformed array entries — each with a specific message. A missing `UnlockedFlags` array is normalized to `[]` so toggles still work.
+- **Catalogues:** `data/currency_map.json` and `data/general_account_unlocks.json` are fetched at startup (relative URLs, no CORS issues on GitHub Pages). If a catalogue is missing, the app shows a specific error instead of rendering an empty editor.
+- **Serving:** because the catalogues are fetched at runtime, the app must be served over HTTP(S) (GitHub Pages works out of the box). Opening `index.html` via `file://` will fail the catalogue fetch — the status line explains why.
+- **Privacy:** no network calls beyond the Google Fonts stylesheet and the same-origin `data/` fetches; the save file is never transmitted.
