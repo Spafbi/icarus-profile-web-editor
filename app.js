@@ -5,39 +5,24 @@
    `UnlockedFlags` entries) are ever mutated; every other key
    in the save file is preserved exactly as loaded.
 
-   Currency names and the unlock-flag catalogue live in external
-   JSON files under data/ so they can be updated per game patch
-   without touching this script.
+   Currency names, unlock flags, and missions live in the single
+   data.json file in the project root so they can be updated per
+   game patch without touching this script.
    ========================================================= */
 (function () {
   "use strict";
 
-  // ---- External data files (fetched at startup) ----
-  var DATA_FILES = {
-    currencyMap: "data/currency_map.json",
-    generalAccountUnlocks: "data/general_account_unlocks.json",
-    unlockedFlags: "data/unlocked_flags.json",
-    missions: "data/missions.json"
-  };
-
-  // ---- Toggle section registry ----
-  // Each entry describes one toggleable list rendered in the
-  // "Account Unlocks" panel. To add a future catalogue (missions,
-  // workshop unlocks, talents, ...), drop a JSON file under data/
-  // and register it here — the rendering pipeline is generic.
-  var TOGGLE_SECTIONS = [
-    {
-      id: "general-account",
-      title: "General Account Unlocks",
-      sourceKey: "generalAccountUnlocks", // key into DATA_FILES
-      itemsKey: "UnlockedFlags",          // property inside that JSON file
-      descriptionKey: "description",
-      valueKey: "unlock_flag_value"
-    }
-  ];
+  // ---- External data (fetched at startup) ----
+  // A single data.json file in the project root holds every catalogue:
+  //   MetaResources                 currency name / addStep / setMax
+  //   General_Account_Unlocked_Flags  toggleable account-wide flag values
+  //   Mission_Talents                per-map list of { mission, talent, UnlockedFlags? }
+  //   Map_Display_Weights            map-name -> sort order for mission groups
+  //   Unlocked_Flags                 flag value -> rewards text (descriptions)
+  var DATA_FILE = "data.json";
 
   var EXPORT_FILENAME = "Profile.json";
-  // Defaults applied when a currency entry in data/currency_map.json
+  // Defaults applied when a MetaResources entry in data.json
   // omits the per-currency fields.
   var DEFAULT_ADD_STEP = 10000;
   var DEFAULT_SET_MAX = 999999;
@@ -54,12 +39,12 @@
   var loaded = false;
   var toastTimer = null;
 
-  // External catalogues, fetched from data/ before a profile is loaded.
+  // Catalogues from data.json, fetched before a profile is loaded.
   var currencyMap = null;
-  var dataSources = {};
+  var catalog = null;
   var appReady = false;
   // Map of unlock-flag value -> human-readable description, built from
-  // data/unlocked_flags.json (talent -> rewards) at startup.
+  // data.json's Unlocked_Flags list (talent -> rewards) at startup.
   var flagDescriptions = {};
 
   // ---- DOM refs ----
@@ -165,9 +150,8 @@
   }
 
   /* ---------- Currency configuration ---------- */
-  // Each entry in data/currency_map.json may be:
+  // Each MetaResources entry in data.json is:
   //   "MetaRow": { "name": ..., "addStep": ..., "setMax": ... }
-  //   "MetaRow": "Display name"            (legacy / minimal form)
   // Missing addStep / setMax fall back to the defaults below.
   function getCurrencyConfig(metaRow) {
     var name = metaRow;
@@ -175,9 +159,7 @@
     var setMax = DEFAULT_SET_MAX;
 
     var entry = currencyMap && currencyMap[metaRow];
-    if (typeof entry === "string" && entry) {
-      name = entry;
-    } else if (entry && typeof entry === "object") {
+    if (entry && typeof entry === "object") {
       if (typeof entry.name === "string" && entry.name) name = entry.name;
       if (isFinite(Number(entry.addStep)) && Number(entry.addStep) > 0) {
         addStep = Math.round(Number(entry.addStep));
@@ -254,11 +236,12 @@
 
   /* ---------- Unlock flags ---------- */
   // Build a map of unlock-flag value -> human-readable description from the
-  // unlocked-flags catalogue (data/unlocked_flags.json: talent -> rewards).
+  // unlocked-flags catalogue (data.json Unlocked_Flags: talent -> rewards).
   function buildFlagDescriptions() {
     var map = {};
-    var source = dataSources.unlockedFlags || {};
-    var arr = Array.isArray(source.unlocked_flags) ? source.unlocked_flags : [];
+    var arr = (catalog && Array.isArray(catalog.Unlocked_Flags))
+      ? catalog.Unlocked_Flags
+      : [];
     for (var i = 0; i < arr.length; i++) {
       var e = arr[i];
       if (!e) continue;
@@ -268,12 +251,6 @@
       }
     }
     return map;
-  }
-
-  function getFlagValue(item, section) {
-    var raw = (item && typeof item === "object") ? item[section.valueKey] : item;
-    var n = Number(raw);
-    return isFinite(n) ? n : null;
   }
 
   function isFlagUnlocked(value) {
@@ -352,40 +329,44 @@
   }
 
   /* ---------- Completed Missions catalogue ---------- */
-  // Build the mission list grouped by map, sorted by map_display_weights
-  // (ascending). Entries sharing the same (map, talent RowName) are collapsed
-  // into one toggle: the first-seen mission name is kept and their UnlockedFlags
-  // are unioned, since the toggle state is driven by the RowName.
+  // Build the mission list grouped by map, sorted by Map_Display_Weights
+  // (ascending). data.json's Mission_Talents is an object keyed by map,
+  // each value a list of { mission, talent, UnlockedFlags? } entries.
+  // Entries within a map sharing the same talent RowName are collapsed
+  // into one toggle: the first-seen mission name is kept and their
+  // UnlockedFlags are unioned, since the toggle state is driven by the
+  // RowName.
   function buildMissionGroups() {
-    var source = dataSources.missions || {};
-    var weights = source.map_display_weights || {};
-    var items = Array.isArray(source.mission_talents) ? source.mission_talents : [];
+    var weights = (catalog && catalog.Map_Display_Weights) || {};
+    var byMap = (catalog && catalog.Mission_Talents) || {};
 
     var mapToTalents = {};
     var mapFirstSeen = {};
     var mapSeq = 0;
 
-    for (var i = 0; i < items.length; i++) {
-      var it = items[i];
-      if (!it || typeof it !== "object") continue;
-      var map = it.map;
-      var talent = it.talent;
-      if (typeof map !== "string" || !map) continue;
-      if (typeof talent !== "string" || !talent) continue;
+    for (var map in byMap) {
+      if (!Object.prototype.hasOwnProperty.call(byMap, map)) continue;
+      var items = Array.isArray(byMap[map]) ? byMap[map] : [];
       if (!mapToTalents[map]) {
         mapToTalents[map] = {};
         mapFirstSeen[map] = ++mapSeq;
       }
       var bucket = mapToTalents[map];
-      if (!bucket[talent]) bucket[talent] = { name: "", flags: {} };
-      var entry = bucket[talent];
-      if (!entry.name && typeof it.mission === "string" && it.mission) {
-        entry.name = it.mission;
-      }
-      if (Array.isArray(it.UnlockedFlags)) {
-        for (var f = 0; f < it.UnlockedFlags.length; f++) {
-          var n = Number(it.UnlockedFlags[f]);
-          if (isFinite(n)) entry.flags[n] = true;
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        if (!it || typeof it !== "object") continue;
+        var talent = it.talent;
+        if (typeof talent !== "string" || !talent) continue;
+        if (!bucket[talent]) bucket[talent] = { name: "", flags: {} };
+        var entry = bucket[talent];
+        if (!entry.name && typeof it.mission === "string" && it.mission) {
+          entry.name = it.mission;
+        }
+        if (Array.isArray(it.UnlockedFlags)) {
+          for (var f = 0; f < it.UnlockedFlags.length; f++) {
+            var n = Number(it.UnlockedFlags[f]);
+            if (isFinite(n)) entry.flags[n] = true;
+          }
         }
       }
     }
@@ -458,7 +439,7 @@
       missionsEl.appendChild(
         makeElement("div", {
           "class": "missions-empty",
-          text: "No missions catalogued yet (data/missions.json has no entries)."
+          text: "No missions catalogued yet (data.json has no Mission_Talents entries)."
         })
       );
       return;
@@ -554,68 +535,63 @@
     if (!toggleSectionsEl) return;
     toggleSectionsEl.textContent = "";
 
-    for (var s = 0; s < TOGGLE_SECTIONS.length; s++) {
-      var section = TOGGLE_SECTIONS[s];
-      var source = dataSources[section.sourceKey] || {};
-      var items = Array.isArray(source[section.itemsKey])
-        ? source[section.itemsKey]
-        : [];
+    // The toggleable flag list comes straight from data.json's
+    // General_Account_Unlocked_Flags array of integer flag values;
+    // each flag's label is looked up from the Unlocked_Flags catalogue.
+    var items = (catalog && Array.isArray(catalog.General_Account_Unlocked_Flags))
+      ? catalog.General_Account_Unlocked_Flags
+      : [];
 
-      var block = makeElement("div", {
-        "class": "toggle-block",
-        id: "toggle-block-" + section.id
+    var block = makeElement("div", {
+      "class": "toggle-block",
+      id: "toggle-block-general-account"
+    });
+    block.appendChild(
+      makeElement("h4", { "class": "toggle-block-title", text: "General Account Unlocks" })
+    );
+
+    var list = makeElement("div", { "class": "toggle-list" });
+    var seen = {};
+    for (var i = 0; i < items.length; i++) {
+      var value = Number(items[i]);
+      if (!isFinite(value)) continue;
+      if (seen[value]) continue; // guard against duplicate catalogue entries
+      seen[value] = true;
+
+      var checked = isFlagUnlocked(value);
+      var rowId = "toggle-general-account-" + value;
+      var row = makeElement("label", {
+        "class": "toggle-row" + (checked ? " is-on" : ""),
+        for: rowId
       });
-      block.appendChild(
-        makeElement("h4", { "class": "toggle-block-title", text: section.title })
+      var input = makeElement("input", {
+        id: rowId,
+        "class": "toggle-input",
+        type: "checkbox"
+      });
+      input.checked = checked;
+      input.setAttribute("data-section", "general-account");
+      input.setAttribute("data-flag-value", String(value));
+      row.appendChild(input);
+      row.appendChild(
+        makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
       );
 
-      var list = makeElement("div", { "class": "toggle-list" });
-      var seen = {};
-      for (var i = 0; i < items.length; i++) {
-        var item = items[i];
-        var value = getFlagValue(item, section);
-        if (value === null) continue;
-        if (seen[value]) continue; // guard against duplicate catalogue entries
-        seen[value] = true;
-
-        var checked = isFlagUnlocked(value);
-        var rowId = "toggle-" + section.id + "-" + value;
-        var row = makeElement("label", {
-          "class": "toggle-row" + (checked ? " is-on" : ""),
-          for: rowId
-        });
-        var input = makeElement("input", {
-          id: rowId,
-          "class": "toggle-input",
-          type: "checkbox"
-        });
-        input.checked = checked;
-        input.setAttribute("data-section", section.id);
-        input.setAttribute("data-flag-value", String(value));
-        row.appendChild(input);
-        row.appendChild(
-          makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
-        );
-
-        var text = makeElement("span", { "class": "toggle-text" });
-        // Prefer the description looked up from data/unlocked_flags.json;
-        // fall back to the item's own description (older object format).
-        var desc = flagDescriptions[value];
-        if (!desc && item && typeof item === "object") {
-          desc = item[section.descriptionKey];
-        }
-        text.appendChild(
-          makeElement("span", {
-            "class": "toggle-desc",
-            text: typeof desc === "string" && desc ? desc : "Flag " + value
-          })
-        );
-        row.appendChild(text);
-        list.appendChild(row);
-      }
-      block.appendChild(list);
-      toggleSectionsEl.appendChild(block);
+      var text = makeElement("span", { "class": "toggle-text" });
+      // Prefer the description looked up from data.json's Unlocked_Flags;
+      // fall back to a generic label.
+      var desc = flagDescriptions[value];
+      text.appendChild(
+        makeElement("span", {
+          "class": "toggle-desc",
+          text: typeof desc === "string" && desc ? desc : "Flag " + value
+        })
+      );
+      row.appendChild(text);
+      list.appendChild(row);
     }
+    block.appendChild(list);
+    toggleSectionsEl.appendChild(block);
   }
 
   /* ---------- Editing ---------- */
@@ -808,20 +784,10 @@
   }
 
   function boot() {
-    var keys = [];
-    for (var key in DATA_FILES) {
-      if (Object.prototype.hasOwnProperty.call(DATA_FILES, key)) keys.push(key);
-    }
-
-    Promise.all(
-      keys.map(function (key) {
-        return loadJson(DATA_FILES[key]).then(function (data) {
-          dataSources[key] = data;
-        });
-      })
-    )
-      .then(function () {
-        currencyMap = dataSources.currencyMap || {};
+    loadJson(DATA_FILE)
+      .then(function (data) {
+        catalog = data && typeof data === "object" && !Array.isArray(data) ? data : {};
+        currencyMap = (catalog && catalog.MetaResources) || {};
         flagDescriptions = buildFlagDescriptions();
         appReady = true;
         setStatus(
@@ -832,10 +798,10 @@
       })
       .catch(function (err) {
         setStatus(
-          "Could not load the editor catalogues" +
+          "Could not load the editor catalogue" +
             (err && err.message ? " \u2014 " + err.message : "") +
             ". The app must be served over HTTP(S) (e.g. GitHub Pages) with " +
-            "the files in data/ present.",
+            "the data.json file present in the project root.",
           "error"
         );
       });
@@ -903,7 +869,7 @@
       missionsEl.addEventListener("change", onMissionToggleChange);
     }
 
-    // Fetch the external catalogues from data/.
+    // Fetch the external catalogue from data.json.
     boot();
   }
 

@@ -1,6 +1,6 @@
 # ICARUS Profile Editor
 
-A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — and **toggle account unlock flags** right in your browser. Mission and workshop unlock editing is on the roadmap.
+A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — **toggle account unlock flags**, and **mark missions as completed** to grant their talents, all right in your browser.
 
 Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework, no backend.
 
@@ -19,34 +19,35 @@ To preserve the intended experience, **consider saving this tool for bug recover
 - **Safe validation.** The file is checked to be valid JSON and to contain the required `MetaResources` array, with clear, friendly error messages otherwise.
 - **Full state preservation.** The whole file is parsed into memory and only the values you edit are ever modified: `Count` values inside `MetaResources` and entries in the `UnlockedFlags` list. Talents, `UserID`, `NextChrSlot`, `DataVersion`, and everything else pass through **unmodified**.
 - **Missing currencies are handled.** Any supported currency absent from your file is displayed as `0` and is injected (with the value you set) the moment you edit it.
-- **Quick tools.** Each currency has `+N`, `Set N`, and `Reset` helpers, where `N` is per-currency in `data/currency_map.json` (defaults: +10,000 / Set 999,999).
-- **Unlock flag toggles.** A list of general account unlock flags, each labeled with a human-readable description (looked up from `data/unlocked_flags.json`). Toggling a flag on adds its value to `UnlockedFlags` (inserted at its sorted position); toggling it off removes it. Flags present in your file but absent from the catalogue are preserved untouched.
-- **Data-driven catalogues.** Currency names, the unlock-flag list, and their descriptions live in external JSON files under `data/`, so entries can be added or removed per game update without touching the app code.
+- **Quick tools.** Each currency has `+N`, `Set N`, and `Reset` helpers, where `N` is per-currency in the `MetaResources` key of `data.json` (defaults: +10,000 / Set 999,999).
+- **Unlock flag toggles.** A list of general account unlock flags (from `data.json`'s `General_Account_Unlocked_Flags`), each labeled with a human-readable description (looked up from its `Unlocked_Flags` catalogue). Toggling a flag on adds its value to `UnlockedFlags` (inserted at its sorted position); toggling it off removes it. Flags present in your file but absent from the catalogue are preserved untouched.
+- **Completed Missions.** Missions are grouped per map; marking one completed adds its talent RowName to `Talents` and any unlock flags it grants to `UnlockedFlags`, and unmarking removes both.
+- **Data-driven catalogues.** Currency names, the unlock-flag list, its descriptions, and the mission lists all live in the single `data.json` file in the project root, so entries can be added or removed per game update without touching the app code.
 - **Exact export.** Downloads a `Profile.json` (case-sensitive) serialized with 2-space indentation.
 
 ### Supported currencies
 
 | Internal `MetaRow`   | In-game display name  | Increment | Set value |
 | -------------------- | --------------------- | --------- | --------- |
-| `Credits`            | Ren                   | +10,000   | 999,999   |
-| `Exotic1`            | Exotics               | +10,000   | 999,999   |
-| `Exotic_Red`         | Stabilized Exotic     | +10,000   | 999,999   |
-| `Biomass`            | Legendary Biomass     | +10,000   | 999,999   |
-| `Licence`            | Legendary Licence     | +10       | 500       |
-| `Exotic_Uranium`     | Uranium Rod           | +10,000   | 999,999   |
+| `Credits`            | Ren                   | +100      | 999,999   |
+| `Exotic1`            | Exotics               | +100      | 999,999   |
+| `Exotic_Red`         | Stabilized Exotic     | +100      | 999,999   |
+| `Biomass`            | Legendary Biomass     | +100      | 999,999   |
+| `Licence`            | Legendary Licences    | +10       | 500       |
+| `Exotic_Uranium`     | Uranium Rod           | +100      | 999,999   |
 | `Refund`             | Respec Points         | +10       | 500       |
 
 ### Known unlock flags
 
-The **list of flags** shown under *Account Unlocks* comes from `data/general_account_unlocks.json` — a plain JSON array of flag values:
+The **list of flags** shown under *Account Unlocks* comes from the `General_Account_Unlocked_Flags` key in `data.json` — a plain JSON array of flag values:
 
 ```json
-{ "UnlockedFlags": [ 3, 4, 95 ] }
+"General_Account_Unlocked_Flags": [ 3, 4, 95 ]
 ```
 
-Each flag's **description** is looked up from `data/unlocked_flags.json` by matching the flag value to that file's `talent`; the matching `rewards` text is what the UI displays. Add or remove flag values in `general_account_unlocks.json` as the game evolves, and add or edit the matching `talent` / `rewards` entries in `unlocked_flags.json` to change what is shown.
+Each flag's **description** is looked up from `data.json`'s `Unlocked_Flags` catalogue by matching the flag value to its `talent`; the matching `rewards` text is what the UI displays. Add or remove flag values in `General_Account_Unlocked_Flags` as the game evolves, and add or edit the matching `talent` / `rewards` entries in `Unlocked_Flags` to change what is shown.
 
-| Flag value | Description (from `unlocked_flags.json`) |
+| Flag value | Description (from `Unlocked_Flags`) |
 | ---------- | ---------------------------------------- |
 | `3`        | Level 10 Boost Consumed (Styx)           |
 | `4`        | Level 20 Boost Consumed (Promethius)     |
@@ -56,12 +57,13 @@ Each flag's **description** is looked up from `data/unlocked_flags.json` by matc
 
 ## Keeping the catalogues up to date
 
-All user-facing value lists are external JSON files in `data/` — **edit them, commit, and push; no code changes needed.**
+All user-facing value lists live in the single `data.json` file in the project root — **edit it, commit, and push; no code changes needed.**
 
-- **`data/currency_map.json`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `10000` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
-- **`data/general_account_unlocks.json`** — the list of toggleable general account flags shown under *Account Unlocks*. It is a plain JSON array of integer flag values: `{ "UnlockedFlags": [ 3, 4, 95 ] }`. Add a value as a new flag is identified; remove one for a flag the game has retired.
-- **`data/unlocked_flags.json`** — the human-readable text behind unlock flags: an array of `{ "talent": <flag value>, "mission": <mission name>, "rewards": <display text> }`. The *Account Unlocks* labels are resolved by matching a flag value to `talent` and using its `rewards`; a flag with no matching entry falls back to `Flag <value>`.
-- **Future catalogues** (missions, workshop unlocks, talents) will follow the same pattern: a JSON file under `data/` plus a small registration entry in `app.js`.
+- **`MetaResources`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `10000` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
+- **`General_Account_Unlocked_Flags`** — the list of toggleable general account flags shown under *Account Unlocks*. It is a plain JSON array of integer flag values: `[ 3, 4, 95 ]`. Add a value as a new flag is identified; remove one for a flag the game has retired.
+- **`Unlocked_Flags`** — the human-readable text behind unlock flags: an array of `{ "talent": <flag value>, "rewards": <display text> }`. The *Account Unlocks* labels and mission reward chips are resolved by matching a flag value to `talent` and using its `rewards`; a flag with no matching entry falls back to `Flag <value>`.
+- **`Mission_Talents`** — the *Completed Missions* list, keyed by map: `{ "<Map>": [ { "mission": <name>, "talent": <RowName>, "UnlockedFlags": [<flag values>] } ] }`. `UnlockedFlags` is optional — those flags are granted/revoked together with the mission's talent.
+- **`Map_Display_Weights`** — maps a map name to its sort position (ascending) in the *Completed Missions* list; maps without a weight sort last.
 
 ---
 
@@ -114,16 +116,13 @@ icarus-profile-web-editor/
 ├── index.html        # Semantic HTML5 layout (dropzone, editor sections, export)
 ├── style.css         # Icarus-themed, responsive styling
 ├── app.js            # File reading, parsing, validation, editing, export
+├── data.json         # Catalogues: currencies, unlock flags, missions, map weights
 ├── README.md         # This file
-├── assets/
-│   └── icon.png      # (optional) square app icon / tab favicon
-└── data/
-    ├── currency_map.json           # name / addStep / setMax per currency
-    ├── general_account_unlocks.json # list of general account flag values (Account Unlocks)
-    └── unlocked_flags.json          # unlock-flag catalogue: talent/mission/rewards (descriptions)
+└── assets/
+    └── icon.png      # (optional) square app icon / tab favicon
 ```
 
-> `data/` holds only **catalogue metadata** — the player's `Profile.json` is always uploaded at runtime and never stored in the repository.
+> `data.json` holds only **catalogue metadata** — the player's `Profile.json` is always uploaded at runtime and never stored in the repository.
 
 ### Adding the app icon
 
@@ -175,6 +174,6 @@ That's it — no build tools, no CI, no server required.
 - **State preservation:** the file is loaded with `JSON.parse`, held as a single in-memory object, and only `MetaResources` counts and `UnlockedFlags` entries are mutated. Export is `JSON.stringify(data, null, 2)`.
 - **Injection:** a missing `MetaRow` is appended to `MetaResources` as `{ "MetaRow": "<key>", "Count": <value> }` on first edit. A flag toggled on is inserted into `UnlockedFlags` at its sorted (ascending) position.
 - **Validation:** rejects non-JSON input, non-object roots, a missing `MetaResources` array, and malformed array entries — each with a specific message. A missing `UnlockedFlags` array is normalized to `[]` so toggles still work.
-- **Catalogues:** `data/currency_map.json`, `data/general_account_unlocks.json`, and `data/unlocked_flags.json` are fetched at startup (relative URLs, no CORS issues on GitHub Pages). If a catalogue is missing, the app shows a specific error instead of rendering an empty editor.
-- **Serving:** because the catalogues are fetched at runtime, the app must be served over HTTP(S) (GitHub Pages works out of the box). Opening `index.html` via `file://` will fail the catalogue fetch — the status line explains why.
-- **Privacy:** no network calls beyond the Google Fonts stylesheet and the same-origin `data/` fetches; the save file is never transmitted.
+- **Catalogues:** `data.json` in the project root is fetched at startup (relative URL, no CORS issues on GitHub Pages). If it is missing, the app shows a specific error instead of rendering an empty editor.
+- **Serving:** because the catalogue is fetched at runtime, the app must be served over HTTP(S) (GitHub Pages works out of the box). Opening `index.html` via `file://` will fail the catalogue fetch — the status line explains why.
+- **Privacy:** no network calls beyond the Google Fonts stylesheet and the same-origin `data.json` fetch; the save file is never transmitted.
