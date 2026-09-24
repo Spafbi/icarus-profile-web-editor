@@ -1,0 +1,1040 @@
+{
+    "General_Account_Unlocked_Flags": [ 3, 4, 95 ],
+    "Map_Display_Weights": {
+        "Olympus": 1,
+        "Styx": 2,
+        "Prometheus": 3,
+        "Elysium": 4,
+        "Great Hunts: Quarrite": 5,
+        "Great Hunts: Rimetusk": 6,
+        "Great Hunts: Garganutan": 7
+    },
+    "MetaResources": {
+        "Credits": {
+            "name": "Ren",
+            "addStep": 100,
+            "setMax": 999999
+        },
+        "Exotic1": {
+            "name": "Exotics",
+            "addStep": 100,
+            "setMax": 999999
+        },
+        "Exotic_Red": {
+            "name": "Stabilized Exotic",
+            "addStep": 100,
+            "setMax": 999999
+        },
+        "Biomass": {
+            "name": "Legendary Biomass",
+            "addStep": 100,
+            "setMax": 999999
+        },
+        "Licence": {
+            "name": "Legendary Licences",
+            "addStep": 10,
+            "setMax": 500
+        },
+        "Exotic_Uranium": {
+            "name": "Uranium Rod",
+            "addStep": 100,
+            "setMax": 999999
+        },
+        "Refund": {
+            "name": "Respec Points",
+            "addStep": 10,
+            "setMax": 500
+        }
+    },
+    "Mission_Talents": {
+        "Olympus": [
+            {
+                "mission": "Beachhead",
+                "talent": "Prospect_OLY_Forest_Recon"
+            },
+            {
+                "mission": "Potshot",
+                "talent": "Prospect_OLY_Forest_Range",
+                "UnlockedFlags": [ 20 ]
+            },
+            {
+                "mission": "Spelunking",
+                "talent": "Prospect_OLY_Forest_WS_Stockpile"
+            },
+            {
+                "mission": "Livewire",
+                "talent": "Prospect_OLY_Forest_Scan"
+            },
+            {
+                "mission": "Kill List",
+                "talent": "Prospect_OLY_Forest_Extermination"
+            },
+            {
+                "mission": "Forsaken",
+                "talent": "Prospect_OLY_Forest_Defence"
+            },
+            {
+                "mission": "Rustic",
+                "talent": "Prospect_OLY_Forest_Construction"
+            },
+            {
+                "mission": "Accumulation",
+                "talent": "Prospect_OLY_Forest_Stockpile"
+            },
+            {
+                "mission": "Headstone",
+                "talent": "Prospect_OLY_Forest_Survey"
+            },
+            {
+                "mission": "Cultivation Specialist",
+                "talent": "Prospect_OLY_SQ_Farm"
+            },
+            {
+                "mission": "Strange Harvest",
+                "talent": "Prospect_OLY_Forest_Research"
+            },
+            {
+                "mission": "Potshot",
+                "talent": "Prospect_OLY_Forest_Range"
+            },
+            {
+                "mission": "Spelunking",
+                "talent": "Prospect_OLY_Forest_WS_Stockpile"
+            },
+            {
+                "mission": "Livewire",
+                "talent": "Prospect_OLY_Forest_Scan"
+            },
+            {
+                "mission": "Kill List",
+                "talent": "Prospect_OLY_Forest_Extermination"
+            },
+            {
+                "mission": "Rustic",
+                "talent": "Prospect_OLY_Forest_Construction"
+            },
+            {
+                "mission": "Accumulation",
+                "talent": "Prospect_OLY_Forest_Stockpile"
+            },
+            {
+                "mission": "Headstone",
+                "talent": "Prospect_OLY_Forest_Survey"
+            },
+            {
+                "mission": "Cultivation Specialist",
+                "talent": "Prospect_OLY_SQ_Farm"
+            },
+            {
+                "mission": "Strange Harvest",
+                "talent": "Prospect_OLY_Forest_Research"
+            },
+            {
+                "mission": "Dry Run",
+                "talent": "Prospect_OLY_Canyon_Expedition",
+                "UnlockedFlags": [ 80 ]
+            },
+            {
+                "mission": "Solid Metal",
+                "talent": "Prospect_OLY_Canyons_Stockpile"
+            },
+            {
+                "mission": "Preservation",
+                "talent": "Prospect_OLY_Canyon_Stockpile_2"
+            },
+            {
+                "mission": "Death Ray",
+                "talent": "Prospect_OLY_Canyon_Scan"
+            },
+            {
+                "mission": "Pyramid",
+                "talent": "Prospect_OLY_Canyon_Construction",
+                "UnlockedFlags": [ 81 ]
+            },
+            {
+                "mission": "Spirit Level",
+                "talent": "Prospect_OLY_Canyon_Survey",
+                "UnlockedFlags": [ 82 ]
+            },
+            {
+                "mission": "Sandy Bridges",
+                "talent": "Prospect_OLY_Canyon_LongSurvey"
+            },
+            {
+                "mission": "Field Test",
+                "talent": "Prospect_OLY_Canyon_Recovery"
+            },
+            {
+                "mission": "Fisheries Officer",
+                "talent": "Prospect_OLY_SQ_Fisher"
+            },
+            {
+                "mission": "Icestorm",
+                "talent": "Prospect_OLY_Glacier_Expedition",
+                "UnlockedFlags": [ 79 ]
+            },
+            {
+                "mission": "Deep Vein",
+                "talent": "Prospect_OLY_Glacier_Extraction"
+            },
+            {
+                "mission": "Influx",
+                "talent": "Prospect_OLY_Glacier_Construction"
+            },
+            {
+                "mission": "Resurgence",
+                "talent": "Prospect_OLY_Glacier_Research"
+            },
+            {
+                "mission": "Searchlight",
+                "talent": "Prospect_OLY_Glacier_Scan"
+            },
+            {
+                "mission": "Broken Arrow",
+                "talent": "Prospect_OLY_Glacier_Recovery"
+            },
+            {
+                "mission": "Predator Specialist",
+                "talent": "Prospect_OLY_SQ_Hunter"
+            },
+            {
+                "mission": "Waterfall",
+                "talent": "Prospect_OLY_Riverlands_Expedition",
+                "UnlockedFlags": [ 77 ]
+            },
+            {
+                "mission": "Meridian",
+                "talent": "Prospect_OLY_Riverlands_Extraction"
+            },
+            {
+                "mission": "Payday",
+                "talent": "Prospect_OLY_Arctic_Extraction"
+            },
+            {
+                "mission": "Life Line",
+                "talent": "Prospect_OLY_Riverlands_Construction"
+            },
+            {
+                "mission": "Agriculture",
+                "talent": "Prospect_OLY_Farming"
+            },
+            {
+                "mission": "Clustered",
+                "talent": "Prospect_OLY_Riverlands_Survey"
+            },
+            {
+                "mission": "Ramp Up",
+                "talent": "Prospect_OLY_Riverlands_Stockpile"
+            },
+            {
+                "mission": "Wet Work",
+                "talent": "Prospect_OLY_Riverlands_Extermination",
+                "UnlockedFlags": [ 10 ]
+            },
+            {
+                "mission": "Big Shot",
+                "talent": "Prospect_OLY_Riverlands_Stockpile_2",
+                "UnlockedFlags": [ 76 ]
+            },
+            {
+                "mission": "Incursion",
+                "talent": "Prospect_OLY_Riverlands_Scan"
+            },
+            {
+                "mission": "Fire Walk",
+                "talent": "Prospect_OLY_Riverlands_Delivery"
+            },
+            {
+                "mission": "Uplift",
+                "talent": "Prospect_OLY_Riverlands_Research"
+            },
+            {
+                "mission": "Concealment",
+                "talent": "Prospect_OLY_Desert_Recovery"
+            },
+            {
+                "mission": "Black Market",
+                "talent": "Prospect_OLY_SQ_Norex"
+            },
+            {
+                "mission": "Avalance",
+                "talent": "Prospect_OLY_Arctic_Expedition",
+                "UnlockedFlags": [ 78 ]
+            },
+            {
+                "mission": "Clean Up",
+                "talent": "Prospect_OLY_Arctic_Extermination"
+            },
+            {
+                "mission": "Snowcrash",
+                "talent": "Prospect_OLY_Arctic_Recovery"
+            },
+            {
+                "mission": "Snowblind",
+                "talent": "Prospect_OLY_Arctic_Scan"
+            },
+            {
+                "mission": "Advanced Order",
+                "talent": "Prospect_OLY_Arctic_Stockpile"
+            },
+            {
+                "mission": "Station to Station",
+                "talent": "Prospect_OLY_Arctic_Survey"
+            },
+            {
+                "mission": "El Camino",
+                "talent": "Prospect_OLY_Desert_Expedition",
+                "UnlockedFlags": [ 83 ]
+            },
+            {
+                "mission": "Relocated",
+                "talent": "Prospect_OLY_Desert_Recovery_2"
+            },
+            {
+                "mission": "Loose Ends",
+                "talent": "Prospect_OLY_Desert_Extermination_2"
+            },
+            {
+                "mission": "Carapace",
+                "talent": "Prospect_OLY_Desert_Research_2",
+                "UnlockedFlags": [ 13 ]
+            },
+            {
+                "mission": "Nightwatch",
+                "talent": "Prospect_OLY_Desert_Research"
+            },
+            {
+                "mission": "Migrating Sands",
+                "talent": "Prospect_OLY_Desert_Survey",
+                "UnlockedFlags": [ 16 ]
+            },
+            {
+                "mission": "Sandbox",
+                "talent": "Prospect_OLY_Desert_Construction"
+            },
+            {
+                "mission": "Seven Pillars",
+                "talent": "Prospect_OLY_Desert_Scan"
+            },
+            {
+                "mission": "Dust Up",
+                "talent": "Prospect_OLY_Desert_Extermination",
+                "UnlockedFlags": [ 15 ]
+            },
+            {
+                "mission": "Nightfall",
+                "talent": "Prospect_OLY_Omni_",
+                "UnlockedFlags": [ 8, 84 ]
+            },
+            {
+                "mission": "Spirit Walk",
+                "talent": "Prospect_OLY_Omni_Exploration"
+            },
+            {
+                "mission": "Voyager",
+                "talent": "Prospect_OLY_Omni_Recovery"
+            },
+            {
+                "mission": "Unearthed",
+                "talent": "Prospect_Omni_Research",
+                "UnlockedFlags": [ 11 ]
+            },
+            {
+                "mission": "Cryogenic",
+                "talent": "Prospect_Omni_Research_2"
+            }
+        ],
+        "Styx": [
+            {
+                "mission": "Omphalos",
+                "talent": "Prospect_STYX_A_Expedition"
+            },
+            {
+                "mission": "Repopulation",
+                "talent": "Prospect_STYX_A_Research"
+            },
+            {
+                "mission": "Encroachment",
+                "talent": "Prospect_STYX_A_Extermination2",
+                "UnlockedFlags": [ 74 ]
+            },
+            {
+                "mission": "Highrise",
+                "talent": "Prospect_STYX_A_Construction",
+                "UnlockedFlags": [ 75 ]
+            },
+            {
+                "mission": "Maelstrom",
+                "talent": "Prospect_STYX_B_Expedition"
+            },
+            {
+                "mission": "Cultivation Specialist",
+                "talent": "Prospect_STYX_SQ_Farm"
+            },
+            {
+                "mission": "Husk",
+                "talent": "Prospect_STYX_A_Extermination",
+                "UnlockedFlags": [ 17 ]
+            },
+            {
+                "mission": "Ironclad",
+                "talent": "Prospect_STYX_B_Research",
+                "UnlockedFlags": [ 9 ]
+            },
+            {
+                "mission": "Opulence",
+                "talent": "Prospect_STYX_B_Stockpile"
+            },
+            {
+                "mission": "Halcyon",
+                "talent": "Prospect_STYX_B_Extermination"
+            },
+            {
+                "mission": "Ricochet",
+                "talent": "Prospect_STYX_C_Expedition"
+            },
+            {
+                "mission": "Predator Specialist",
+                "talent": "Prospect_STYX_SQ_Hunter"
+            },
+            {
+                "mission": "Alcazar",
+                "talent": "Prospect_STYX_C_Construction",
+                "UnlockedFlags": [ 73 ]
+            },
+            {
+                "mission": "Oasis",
+                "talent": "Prospect_STYX_C_Fishing"
+            },
+            {
+                "mission": "Augmentation",
+                "talent": "Prospect_STYX_C_Extermination2",
+                "UnlockedFlags": [ 12 ]
+            },
+            {
+                "mission": "Ballistic",
+                "talent": "Prospect_STYX_C_Extermination"
+            },
+            {
+                "mission": "Vertigo",
+                "talent": "Prospect_STYX_E_Expedition"
+            },
+            {
+                "mission": "Fisheries Officer",
+                "talent": "Prospect_STYX_SQ_Fisher"
+            },
+            {
+                "mission": "Crescendo",
+                "talent": "Prospect_STYX_E_Survey",
+                "UnlockedFlags": [ 14 ]
+            },
+            {
+                "mission": "Remnant",
+                "talent": "Prospect_STYX_E_Extraction"
+            },
+            {
+                "mission": "Flatline",
+                "talent": "Prospect_STYX_E_Research",
+                "UnlockedFlags": [ 70 ]
+            },
+            {
+                "mission": "Lupine",
+                "talent": "Prospect_STYX_D_Extermination",
+                "UnlockedFlags": [ 18 ]
+            },
+            {
+                "mission": "Zephyr",
+                "talent": "Prospect_STYX_D_Expedition"
+            },
+            {
+                "mission": "Genesis",
+                "talent": "Prospect_STYX_D_Recovery",
+                "UnlockedFlags": [ 69 ]
+            },
+            {
+                "mission": "Rendezvous",
+                "talent": "Prospect_STYX_D_Delivery"
+            },
+            {
+                "mission": "Black Market",
+                "talent": "Prospect_STYX_SQ_Norex"
+            },
+            {
+                "mission": "Abyss",
+                "talent": "Prospect_STYX_D_Research_2"
+            },
+            {
+                "mission": "Gossamer",
+                "talent": "Prospect_STYX_D_Research",
+                "UnlockedFlags": [ 72 ]
+            }
+        ],
+        "Prometheus": [
+            {
+                "mission": "Nomad",
+                "talent": "Prospect_PRO_Story_1"
+            },
+            {
+                "mission": "Cultivation Specialist",
+                "talent": "Prospect_PRO_SQ_Farm"
+            },
+            {
+                "mission": "Offender",
+                "talent": "Prospect_PRO_Story_2"
+            },
+            {
+                "mission": "Fisheries Officer",
+                "talent": "Prospect_PRO_SQ_Fisher"
+            },
+            {
+                "mission": "Crystal",
+                "talent": "Prospect_PRO_A_Extraction"
+            },
+            {
+                "mission": "Celebrity Chef",
+                "talent": "Prospect_PRO_A_Stockpile",
+                "UnlockedFlags": [ 68 ]
+            },
+            {
+                "mission": "Shadowed",
+                "talent": "Prospect_PRO_Story_3",
+                "UnlockedFlags": [ 63 ]
+            },
+            {
+                "mission": "Treehut",
+                "talent": "Prospect_PRO_C_Construction",
+                "UnlockedFlags": [ 66 ]
+            },
+            {
+                "mission": "Predator Specialist",
+                "talent": "Prospect_PRO_SQ_Hunter"
+            },
+            {
+                "mission": "Miasmic",
+                "talent": "Prospect_PRO_C_Research",
+                "UnlockedFlags": [ 65 ]
+            },
+            {
+                "mission": "Tempest",
+                "talent": "Prospect_PRO_Story_4",
+                "UnlockedFlags": [ 60 ]
+            },
+            {
+                "mission": "Magmatic",
+                "talent": "Prospect_PRO_B_Extermination",
+                "UnlockedFlags": [ 67 ]
+            },
+            {
+                "mission": "Dispatch",
+                "talent": "Prospect_PRO_Story_5"
+            },
+            {
+                "mission": "Black Market",
+                "talent": "Prospect_PRO_SQ_Norex"
+            },
+            {
+                "mission": "Fracture",
+                "talent": "Prospect_PRO_Story_6",
+                "UnlockedFlags": [ 19 ]
+            },
+            {
+                "mission": "Ashlands",
+                "talent": "Prospect_PRO_Ashlands_Story",
+                "UnlockedFlags": [ 57 ]
+            },
+            {
+                "mission": "Crisis",
+                "talent": "Prospect_PRO_D_Recovery",
+                "UnlockedFlags": [ 7 ]
+            },
+            {
+                "mission": "Stranded",
+                "talent": "Prospect_PRO_D_Resupply",
+                "UnlockedFlags": [ 62 ]
+            },
+            {
+                "mission": "Rescue",
+                "talent": "Prospect_PRO_D_Rescue",
+                "UnlockedFlags": [ 59 ]
+            },
+            {
+                "mission": "Composition",
+                "talent": "Prospect_PRO_D_Research",
+                "UnlockedFlags": [ 61 ]
+            },
+            {
+                "mission": "Ice Sheet",
+                "talent": "Prospect_PRO_Icesheet_Story",
+                "UnlockedFlags": [ 58 ]
+            },
+            {
+                "mission": "Drover",
+                "talent": "Prospect_PRO_E_Research",
+                "UnlockedFlags": [ 64 ]
+            },
+            {
+                "mission": "Null Sector",
+                "talent": "Prospect_PRO_Nullsector_Story",
+                "UnlockedFlags": [ 6 ]
+            }
+        ],
+        "Elysium": [
+            {
+                "mission": "Lost",
+                "talent": "Prospect_ELY_Story_1",
+                "UnlockedFlags": [ 93 ]
+            },
+            {
+                "mission": "Igloo",
+                "talent": "Prospect_ELY_SQ_Igloo"
+            },
+            {
+                "mission": "Evolution",
+                "talent": "Prospect_ELY_SQ_Yeti",
+                "UnlockedFlags": [ 87 ]
+            },
+            {
+                "mission": "Fisheries Officer",
+                "talent": "Prospect_ELY_SQ_Fisher"
+            },
+            {
+                "mission": "Relics",
+                "talent": "Prospect_ELY_Story_2"
+            },
+            {
+                "mission": "Cultivation Specialist",
+                "talent": "Prospect_ELY_SQ_Farm"
+            },
+            {
+                "mission": "Nexus",
+                "talent": "Prospect_ELY_Story_3",
+                "UnlockedFlags": [ 90 ]
+            },
+            {
+                "mission": "Predator Specialist",
+                "talent": "Prospect_ELY_SQ_Hunter"
+            },
+            {
+                "mission": "Angler",
+                "talent": "Prospect_ELY_SQ_Fish"
+            },
+            {
+                "mission": "Fallout",
+                "talent": "Prospect_ELY_Story_4",
+                "UnlockedFlags": [ 99 ]
+            },
+            {
+                "mission": "Black Market",
+                "talent": "Prospect_ELY_SQ_Norex"
+            },
+            {
+                "mission": "Rift",
+                "talent": "Prospect_ELY_Story_5",
+                "UnlockedFlags": [ 91 ]
+            },
+            {
+                "mission": "Reconing",
+                "talent": "Prospect_ELY_Story_6",
+                "UnlockedFlags": [ 89 ]
+            },
+            {
+                "mission": "Ambush",
+                "talent": "Prospect_ELY_SQ_Speeder1",
+                "UnlockedFlags": [ 98 ]
+            },
+            {
+                "mission": "Lifeline",
+                "talent": "Prospect_ELY_SQ_Speeder2",
+                "UnlockedFlags": [ 97 ]
+            },
+            {
+                "mission": "Courier",
+                "talent": "Prospect_ELY_SQ_Speeder3",
+                "UnlockedFlags": [ 96 ]
+            },
+            {
+                "mission": "Trials",
+                "talent": "Prospect_ELY_SQ_Speeder4",
+                "UnlockedFlags": [ 88 ]
+            }
+        ]
+    },    
+    "Unlocked_Flags": [
+        {
+            "talent": 3,
+            "rewards": "Level 10 Boost Consumed (Styx) - Turn off to enable use the Level 10 Boost"
+        },
+        {
+            "talent": 4,
+            "rewards": "Level 20 Boost Consumed (Promethius) - Turn off to enable use the Level 20 Boost"
+        },
+        {
+            "talent": 5,
+            "rewards": "Welcome to Icarus message explaining the three game modes."
+        },
+        {
+            "talent": 6,
+            "rewards": "Grants 3 Extra Character Talent Points"
+        },
+        {
+            "talent": 7,
+            "rewards": "HEAL Device"
+        },
+        {
+            "talent": 8,
+            "rewards": "Grants 2 Extra Character Talent Points"
+        },
+        {
+            "talent": 9,
+            "rewards": "Grants 2 Extra Character Talent Points"
+        },
+        {
+            "talent": 10,
+            "rewards": "Animal Bait, Poisoned Animal Bait"
+        },
+        {
+            "talent": 11,
+            "rewards": "Caveworm Knife, Caveworm Spear, Caveworm Throwing Knife, Caveworm Javelin"
+        },
+        {
+            "talent": 12,
+            "rewards": "Caveworm Arrow, Caveworm Bow"
+        },
+        {
+            "talent": 13,
+            "rewards": "Scorpion Hedgehog, Scorpion Pincer Trap"
+        },
+        {
+            "talent": 14,
+            "rewards": "Sandworm Knife, Sandworm Spear, Sandworm Throwing Knife, Sandworm Javelin"
+        },
+        {
+            "talent": 15,
+            "rewards": "Sandworm Arrow, Sandworm Bow"
+        },
+        {
+            "talent": 16,
+            "rewards": "Sandworm Head Armor, Sandworm Chest Armor, Sandworm Arms Armor, Sandworm Leg Armor, Sandworm Feet Armor"
+        },
+        {
+            "talent": 17,
+            "rewards": "Scorpion Head Armor, Scorpion Chest Armor, Scorpion Legs Armor, Scorpion Arms Armor, Scorpion Feet Armor"
+        },
+        {
+            "talent": 18,
+            "rewards": "Blackwolf Knife, Blackwolf Arrow, Blackwolf Throwing Knife"
+        },
+        {
+            "talent": 19,
+            "rewards": "Broken Pottery, Decorative Shell"
+        },
+        {
+            "talent": 20,
+            "rewards": "Target Dummy, Bullseye Target"
+        },
+        {
+            "talent": 21,
+            "rewards": "Prototype Drill Arrow"
+        },
+        {
+            "talent": 22,
+            "rewards": "Enzymatic Mutation Ammo"
+        },
+        {
+            "talent": 23,
+            "rewards": "Battered Centrifuge, Battered Shaker, Battered Microscope, Battered Test Tubes, Battlered Lab Desk"
+        },
+        {
+            "talent": 24,
+            "rewards": "Echo Device"
+        },
+        {
+            "talent": 25,
+            "rewards": "Luriform Serum"
+        },
+        {
+            "talent": 26,
+            "rewards": "Bio Workshop message"
+        },
+        {
+            "talent": 27,
+            "rewards": "Banana Farming Packet"
+        },
+        {
+            "talent": 28,
+            "rewards": "Mining Armature, Grants 2 Extra Character Talent Points"
+        },
+        {
+            "talent": 29,
+            "rewards": "Tactical Bow, Grants 2 Extra Character Talent Points"
+        },
+        {
+            "talent": 30,
+            "rewards": "Anti-Materiel Rifle, Grants 2 Extra Character Talent Points"
+        },
+        {
+            "talent": 31,
+            "rewards": "Carbonweave Head Armor, Carbonweave Chest Armor, Carbonweave Arms Armor, Carbonweave Legs Armor, Carbonweave Feet Armor"
+        },
+        {
+            "talent": 32,
+            "rewards": "Carbonweave Backpack"
+        },
+        {
+            "talent": 33,
+            "rewards": "Arctic Head Armor, Arctic Chest Armor, Arctic Arms Armor, Arctic Legs Armor, Arctic Feet Armor"
+        },
+        {
+            "talent": 35,
+            "rewards": "Prototype Mini Thumper"
+        },
+        {
+            "talent": 36,
+            "rewards": "Garganutan Fishing Trap"
+        },
+        {
+            "talent": 37,
+            "rewards": "Garganutan Grenade"
+        },
+        {
+            "talent": 38,
+            "rewards": "Garganutan Frenzy Tonic"
+        },
+        {
+            "talent": 39,
+            "rewards": "Garganutan Sonic Attractor"
+        },
+        {
+            "talent": 40,
+            "rewards": "Garganutan Damage Module"
+        },
+        {
+            "talent": 41,
+            "rewards": "Garganutan Force Attachment"
+        },
+        {
+            "talent": 42,
+            "rewards": "Garganutan Head Armor, Garganutan Chest Armor, Garganutan Arms Armor, Garganutan Legs Armor, Garganutan Feet Armor"
+        },
+        {
+            "talent": 43,
+            "rewards": "Garganutan Prime Trophy, Garganutan Rug"
+        },
+        {
+            "talent": 44,
+            "rewards": "Rimetusk Arctic Module"
+        },
+        {
+            "talent": 45,
+            "rewards": "Rimetusk Frost Attachement"
+        },
+        {
+            "talent": 46,
+            "rewards": "Rimetusk Snap Trap"
+        },
+        {
+            "talent": 47,
+            "rewards": "Rimetusk Spear, Rimetusk Javelin"
+        },
+        {
+            "talent": 48,
+            "rewards": "Rimetusk Shield"
+        },
+        {
+            "talent": 49,
+            "rewards": "Rimetusk Head Armor, Rimetusk Chest Armor, Rimetusk Arms Armor, Rimetusk Legs Armor, Rimetusk Feet Armor"
+        },
+        {
+            "talent": 50,
+            "rewards": "Rimetusk Head Trophy, Rimetusk Display Trophy, Rimetusk Chandelier"
+        },
+        {
+            "talent": 51,
+            "rewards": "Quarrite Grenade"
+        },
+        {
+            "talent": 52,
+            "rewards": "Quarrite Armor Attachment"
+        },
+        {
+            "talent": 53,
+            "rewards": "Quarrite Mining Module"
+        },
+        {
+            "talent": 54,
+            "rewards": "Quarrite Gun"
+        },
+        {
+            "talent": 55,
+            "rewards": "Quarrite Sledgehammer"
+        },
+        {
+            "talent": 56,
+            "rewards": "Quarrite Throne Trophy, Quarrite Lamp, Quarrite Throne"
+        },
+        {
+            "talent": 57,
+            "rewards": "Lava Hunter Throne, Lava Hunter Display, Lava Hunter Trophy"
+        },
+        {
+            "talent": 58,
+            "rewards": "Lava Hunter Bomber Mine"
+        },
+        {
+            "talent": 59,
+            "rewards": "Lava Hunter Heated Backpack"
+        },
+        {
+            "talent": 60,
+            "rewards": "Lava Hunter Sickle"
+        },
+        {
+            "talent": 61,
+            "rewards": "Lava Hunter Volcanic Module"
+        },
+        {
+            "talent": 62,
+            "rewards": "Lava Hunter Scorch Attachment"
+        },
+        {
+            "talent": 63,
+            "rewards": "Hammerhead Axe"
+        },
+        {
+            "talent": 64,
+            "rewards": "Hammerhead Swamp Module"
+        },
+        {
+            "talent": 65,
+            "rewards": "Hammerhead Slime Attachment"
+        },
+        {
+            "talent": 66,
+            "rewards": "Hammerhead Grenade"
+        },
+        {
+            "talent": 67,
+            "rewards": "Hammerhead Trophy Coil, Hammerhead Trophy Habitat, Hammerhead Vial Trophy"
+        },
+        {
+            "talent": 68,
+            "rewards": "Epoxy"
+        },
+        {
+            "talent": 69,
+            "rewards": "Giant Scorpion Thorn Module"
+        },
+        {
+            "talent": 70,
+            "rewards": "Giant Scorpion Thorns Attachment"
+        },
+        {
+            "talent": 71,
+            "rewards": "Scorpion Fishing Rod"
+        },
+        {
+            "talent": 72,
+            "rewards": "Scorpion Crossbow"
+        },
+        {
+            "talent": 73,
+            "rewards": "Giant Scorpion Trophy, Scorpion Seat, Hanging Scorpion Trophy, Scorpion Tail Trophy"
+        },
+        {
+            "talent": 74,
+            "rewards": "Black Wolf Wounding Attachment"
+        },
+        {
+            "talent": 75,
+            "rewards": "Black Wolf Shield"
+        },
+        {
+            "talent": 76,
+            "rewards": "Black Wolf Head Armor, Black Wolf Chest Armor, Black Wolf Arm Armor, Black Wolf Leg Armor, Black Wolf Feet Armor"
+        },
+        {
+            "talent": 77,
+            "rewards": "Black Wolf Claw Trap"
+        },
+        {
+            "talent": 78,
+            "rewards": "Black Wolf Forest Module"
+        },
+        {
+            "talent": 79,
+            "rewards": "Running Black Wolf Trophy, Howling Black Wolf Trophy, Sitting Black Wolf Trophy"
+        },
+        {
+            "talent": 80,
+            "rewards": "Full Sandworm Trophy, Sandworm Brazier, Full Sandworm Brazier, Sandworm Trophy"
+        },
+        {
+            "talent": 81,
+            "rewards": "Sandworm Floor, Sandworm Wall, Sandworm Angled, Sandworm Roof/Ramp, Sandworm Beam"
+        },
+        {
+            "talent": 82,
+            "rewards": "Sandworm Roof Corner, Sandworm Halfpitches, Sandworm Halfpieces"
+        },
+        {
+            "talent": 83,
+            "rewards": "Sandworm Desert Module"
+        },
+        {
+            "talent": 84,
+            "rewards": "Sandworm Plating Attachment"
+        },
+        {
+            "talent": 85,
+            "rewards": "Caveworm Head Armor, Caveworm Chest Armor, Caveworm Arms Armor, Caveworm Leg Armor, Caveworm Feet Armor"
+        },
+        {
+            "talent": 86,
+            "rewards": "First character created"
+        },
+        {
+            "talent": 87,
+            "rewards": "Arctic Head Armor"
+        },
+        {
+            "talent": 88,
+            "rewards": "Grants 2 Extra Character Talent Points, Checkered Flag"
+        },
+        {
+            "talent": 89,
+            "rewards": "Grants 3 Extra Character Talent Points, Bastion Head Armor, Bastion Armor Chest, Bastion Armor Arms, Bastion Armor Legs, Bastion Armor Feet"
+        },
+        {
+            "talent": 90,
+            "rewards": "Hazmat Head Armor, Hazmat Chest Armor, Hazmat Arm Armor, Hazmat Leg Armor, Hazmat Feet Armor"
+        },
+        {
+            "talent": 91,
+            "rewards": "Sandwym Queen Lantern, Sandwym Queen Backpack, Sandwym Queen Bow"
+        },
+        {
+            "talent": 93,
+            "rewards": "Onion Farming Packet, Garlic Farming Packet, Truffle Farming Packet"
+        },
+        {
+            "talent": 95,
+            "rewards": "Level 30 Boost Consumed (Elysium) - Turn off to enable use the Level 30 Boost"
+        },
+        {
+            "talent": 96,
+            "rewards": "Prototype Hoverframe"
+        },
+        {
+            "talent": 97,
+            "rewards": "Scouts Arctic Envirosuit"
+        },
+        {
+            "talent": 98,
+            "rewards": "Scouts Submachine Gun"
+        },
+        {
+            "talent": 99,
+            "rewards": "9mm Uranium Round, 12-Guage Uranium Shell, 7.62mm Uranium Round, 5.56mm Uranium Round"
+        }
+    ]
+}
