@@ -57,6 +57,7 @@
   var currencyGrid = document.getElementById("currency-grid");
   var toggleSectionsEl = document.getElementById("toggle-sections");
   var missionsEl = document.getElementById("missions-section");
+  var workshopEl = document.getElementById("workshop-section");
   var downloadBtn = document.getElementById("download-btn");
   var toastEl = document.getElementById("toast");
 
@@ -531,6 +532,131 @@
     if (row) row.classList.toggle("is-on", enabled);
   }
 
+  /* ---------- Workshop Unlocks catalogue ---------- */
+  // data.json's Workshop_Talents is an object keyed by category; each
+  // category maps a display name to a talent RowName. Toggling one on adds
+  // { RowName, Rank: 1 } to Talents, exactly like mission talents.
+  // Categories are sorted ascending by Workshop_Category_Weights, with
+  // first-seen order as the tie-break (mirrors the map groups).
+  function buildWorkshopGroups() {
+    var weights = (catalog && catalog.Workshop_Category_Weights) || {};
+    var byCategory = (catalog && typeof catalog.Workshop_Talents === "object" && catalog.Workshop_Talents)
+      ? catalog.Workshop_Talents
+      : {};
+
+    var groups = [];
+    var firstSeen = {};
+    var seq = 0;
+    for (var category in byCategory) {
+      if (!Object.prototype.hasOwnProperty.call(byCategory, category)) continue;
+      var talentsByDisplay = byCategory[category];
+      if (!talentsByDisplay || typeof talentsByDisplay !== "object") continue;
+
+      var talents = [];
+      var seen = {};
+      for (var name in talentsByDisplay) {
+        if (!Object.prototype.hasOwnProperty.call(talentsByDisplay, name)) continue;
+        var rowName = talentsByDisplay[name];
+        if (typeof rowName !== "string" || !rowName) continue;
+        if (seen[rowName]) continue; // guard against duplicate RowName entries
+        seen[rowName] = true;
+        talents.push({ name: name, talent: rowName });
+      }
+      if (talents.length) {
+        groups.push({ category: category, talents: talents });
+        firstSeen[category] = ++seq;
+      }
+    }
+
+    groups.sort(function (a, b) {
+      var wa = isFinite(Number(weights[a.category])) ? Number(weights[a.category]) : Infinity;
+      var wb = isFinite(Number(weights[b.category])) ? Number(weights[b.category]) : Infinity;
+      if (wa !== wb) return wa - wb;
+      return firstSeen[a.category] - firstSeen[b.category];
+    });
+    return groups;
+  }
+
+  function renderWorkshopUnlocks() {
+    if (!workshopEl) return;
+    workshopEl.textContent = "";
+
+    var groups = buildWorkshopGroups();
+    if (!groups.length) {
+      workshopEl.appendChild(
+        makeElement("div", {
+          "class": "missions-empty",
+          text: "No workshop unlocks catalogued yet (data.json has no Workshop_Talents entries)."
+        })
+      );
+      return;
+    }
+
+    for (var g = 0; g < groups.length; g++) {
+      var group = groups[g];
+      var block = makeElement("div", { "class": "map-group" });
+      block.setAttribute("data-workshop-category", group.category);
+
+      var unlocked = 0;
+      for (var t = 0; t < group.talents.length; t++) {
+        if (isTalentPresent(group.talents[t].talent)) unlocked++;
+      }
+
+      var title = makeElement("h4", { "class": "map-group-title", text: group.category });
+      title.appendChild(
+        makeElement("span", {
+          "class": "map-group-count",
+          text: unlocked + " of " + group.talents.length + " unlocked"
+        })
+      );
+      block.appendChild(title);
+
+      var list = makeElement("div", { "class": "toggle-list" });
+      for (var i = 0; i < group.talents.length; i++) {
+        var talent = group.talents[i];
+        var checked = isTalentPresent(talent.talent);
+        var rowId = "workshop-" + escapeId(group.category) + "-" + escapeId(talent.talent);
+        var row = makeElement("label", {
+          "class": "toggle-row" + (checked ? " is-on" : ""),
+          "for": rowId
+        });
+
+        var input = makeElement("input", {
+          id: rowId,
+          "class": "toggle-input",
+          type: "checkbox"
+        });
+        input.checked = checked;
+        input.setAttribute("data-workshop-talent", talent.talent);
+        row.appendChild(input);
+        row.appendChild(
+          makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
+        );
+
+        var text = makeElement("span", { "class": "toggle-text" });
+        text.appendChild(
+          makeElement("span", { "class": "toggle-desc", text: talent.name })
+        );
+        row.appendChild(text);
+        list.appendChild(row);
+      }
+      block.appendChild(list);
+      workshopEl.appendChild(block);
+    }
+  }
+
+  // One delegated handler for all Workshop Unlocks toggles: marking one on
+  // adds its talent RowName to Talents (Rank 1); unmarking removes it.
+  function onWorkshopToggleChange(e) {
+    var input = e.target;
+    if (!input || input.type !== "checkbox") return;
+    if (!input.hasAttribute("data-workshop-talent")) return;
+    setTalent(input.getAttribute("data-workshop-talent"), input.checked);
+
+    var row = input.closest(".toggle-row");
+    if (row) row.classList.toggle("is-on", input.checked);
+  }
+
   function renderToggleSections() {
     if (!toggleSectionsEl) return;
     toggleSectionsEl.textContent = "";
@@ -734,6 +860,7 @@
     renderCurrencyCards();
     renderToggleSections();
     renderCompletedMissions();
+    renderWorkshopUnlocks();
     editorPanel.classList.remove("is-hidden");
     downloadBtn.disabled = false;
 
@@ -867,6 +994,11 @@
     // Completed Missions toggles — separate delegated listener.
     if (missionsEl) {
       missionsEl.addEventListener("change", onMissionToggleChange);
+    }
+
+    // Workshop Unlocks toggles — separate delegated listener.
+    if (workshopEl) {
+      workshopEl.addEventListener("change", onWorkshopToggleChange);
     }
 
     // Fetch the external catalogue from data.json.

@@ -1036,5 +1036,58 @@
             "talent": 99,
             "rewards": "9mm Uranium Round, 12-Guage Uranium Shell, 7.62mm Uranium Round, 5.56mm Uranium Round"
         }
-    ]
+    ],
+    "Workshop_Category_Weights": {
+        "Envirosuits": 1,
+        "Armor": 2
+    },
+    "Workshop_Talents": {
+        "Envirosuits": {
+            "First Cohort": "Workshop_Deluxe_Envirosuit",
+            "Xigo S5-II": "Workshop_Envirosuit",
+            "Xigo \"Gustav\" S5": "Workshop_Envirosuit_6",
+            "Xigo S5-X": "Workshop_Envirosuit_1",
+            "Xigo \"Fermi\" S5": "Workshop_Envirosuit_5",
+            "Xigo \"Duo\" S5": "Workshop_Envirosuit_3",
+            "Xigo \"Hark\" S5": "Workshop_Envirosuit_7",
+            "Shengong \"Bihu\"": "Workshop_Envirosuit_Shengong",
+            "Shengong \"Dongtian\"": "Workshop_Envirosuit_Shengong2",
+            "Inarus \"Lua\"": "Workshop_Envirosuit_Inaris",
+            "Larkwell \"Haulier\"": "Workshop_Envirosuit_Larkwell_Alpha",
+            "Larkwell \"Bulwark\"": "Workshop_Envirosuit_Larkwell_Bravo",
+            "Scouts Arctic": "Workshop_Envirosuit_Scout"
+        },
+        "Armor": {
+            "Naneo Head": "Workshop_Carbon_Head",
+            "Naneo Arms": "Workshop_Carbon_Arms",
+            "Naneo Chest": "Workshop_Carbon_Chest",
+            "Naneo Legs": "Workshop_Carbon_Legs",
+            "Naneo Feet": "Workshop_Carbon_Feet",
+            "CX-400 Head": "Workshop_Carbon_Helmet_Beta",
+            "CX-400 Arms": "Workshop_Carbon_Arms_Beta",
+            "CX-400 Chest": "Workshop_Carbon_Chest_Beta",
+            "CX-400 Legs": "Workshop_Carbon_Legs_Beta",
+            "CX-400 Feet": "Workshop_Carbon_Feet_Beta",
+            "ST-700 Head": "Workshop_Carbon_Helmet_Alpha",
+            "ST-700 Arms": "Workshop_Carbon_Arms_Alpha",
+            "ST-700 Chest": "Workshop_Carbon_Chest_Alpha",
+            "ST-700 Legs": "Workshop_Carbon_Legs_Alpha",
+            "ST-700 Feet": "Workshop_Carbon_Feet_Alpha",
+            "Larkwell Martinez Tachyon Head": "Workshop_Larkwell_Armor_Alpha_Head",
+            "Larkwell Martinez Tachyon Arms": "Workshop_Larkwell_Armor_Alpha_Arms",
+            "Larkwell Martinez Tachyon Chest": "Workshop_Larkwell_Armor_Alpha_Chest",
+            "Larkwell Martinez Tachyon Legs": "Workshop_Larkwell_Armor_Alpha_Legs",
+            "Larkwell Martinez Tachyon Feet": "Workshop_Larkwell_Armor_Alpha_Feet",
+            "LM Beastmaster Head": "Workshop_Larkwell_Armor_Black_Head",
+            "LM Beastmaster Arms": "Workshop_Larkwell_Armor_Black_Arms",
+            "LM Beastmaster Chest": "Workshop_Larkwell_Armor_Black_Chest",
+            "LM Beastmaster Legs": "Workshop_Larkwell_Armor_Black_Legs",
+            "LM Beastmaster Feet": "Workshop_Larkwell_Armor_Black_Feet",
+            "Stabilization Head": "Workshop_Bulky_Armor_Head",
+            "Stabilization Arms": "Workshop_Bulky_Armor_Arms",
+            "Stabilization Chest": "Workshop_Bulky_Armor_Chest",
+            "Stabilization Legs": "Workshop_Bulky_Armor_Legs",
+            "Stabilization Feet": "Workshop_Bulky_Armor_Feet"
+        }
+    }
 }

@@ -373,6 +373,13 @@ kbd {
 .toggle-desc { font-size: 0.9rem; color: var(--text); }
 .toggle-row:not(.is-on) .toggle-desc { color: var(--text-dim); }
 
+/* Mission and workshop talent names are displayed UPPERCASE, matching the
+   in-game presentation (flag descriptions keep their natural case). */
+#missions-section .toggle-desc,
+#workshop-section .toggle-desc {
+  text-transform: uppercase;
+}
+
 /* ---------- Completed Missions (map groups) ---------- */
 .map-group { margin-bottom: 22px; }
 .map-group-title {
