@@ -6,6 +6,8 @@ The editor is organised into **tabs** — *Meta-Resources*, *General Account Unl
 
 Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework, no backend.
 
+> 🌐 **Try it live** — a hosted copy of the editor is available on GitHub Pages: [spafbi.github.io/icarus-profile-web-editor](https://spafbi.github.io/icarus-profile-web-editor/). Open it in your browser, drop your `Profile.json` on the page, and you're ready to go — no need to clone this repository. Because the app is 100% client-side, the hosted version behaves exactly like running the files locally.
+
 # IMPORTANT 
 > This is an **unofficial fan project**. It is **not** associated with, sponsored by, or endorsed by RocketWerkz. All game assets and trademarks belong to RocketWerkz.
 
