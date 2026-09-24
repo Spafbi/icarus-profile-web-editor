@@ -1164,7 +1164,7 @@
         appReady = true;
         setStatus(
           "Ready. Drop a Profile.json to begin " +
-            "(" + Object.keys(currencyMap).length + " currencies catalogued).",
+            "(" + Object.keys(currencyMap).length + " meta-resources catalogued).",
           "ok"
         );
       })
