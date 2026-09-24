@@ -1,8 +1,12 @@
-# ICARUS Profile Editor
+# Spafbi's ICARUS Profile Editor
 
-A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — **toggle account unlock flags**, and **mark missions as completed** to grant their talents, all right in your browser.
+A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) profile save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — **toggle account unlock flags**, **mark missions as completed** to grant their talents, and **unlock workshop blueprints**, all right in your browser.
+
+The editor is organised into **tabs** — *Meta-Resources*, *General Account Unlocks*, *Completed Missions* (sub-tabbed by map), and *Workshop Unlocks* (sub-tabbed by category) — so the long lists stay easy to navigate.
 
 Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework, no backend.
+
+> 🌐 **Try it live** — a hosted copy of the editor is available on GitHub Pages: [spafbi.github.io/icarus-profile-web-editor](https://spafbi.github.io/icarus-profile-web-editor/). Open it in your browser, drop your `Profile.json` on the page, and you're ready to go — no need to clone this repository. Because the app is 100% client-side, the hosted version behaves exactly like running the files locally.
 
 # IMPORTANT 
 > This is an **unofficial fan project**. It is **not** associated with, sponsored by, or endorsed by RocketWerkz. All game assets and trademarks belong to RocketWerkz.
@@ -16,13 +20,15 @@ To preserve the intended experience, **consider saving this tool for bug recover
 
 - **Local-only / private.** Everything runs in your browser using the `FileReader` API. Your save file is **never uploaded** anywhere.
 - **Drag & drop** or a traditional **file picker** to load a `Profile.json`.
+- **Tabbed editor.** The four sections — *Meta-Resources*, *General Account Unlocks*, *Completed Missions*, and *Workshop Unlocks* — live in tabs, so the UI stays short. *Completed Missions* is further split into **sub-tabs per map** and *Workshop Unlocks* into **sub-tabs per category**; each sub-tab shows an `N / total` count badge (completed missions / unlocked blueprints). Tabs support mouse, keyboard (Left/Right, Home/End), and ARIA screen-reader semantics. Tabs that hold a list of toggles (*General Account Unlocks*, and every map / category sub-tab) carry a **select-all** checkbox inside their expanded panel (below the section title, where the panel has one): it turns every toggle in that panel on, or all off if they are already on. Its tri-state (checked / mixed / unchecked) and the sub-tab's `N / total` badge track the rows as you toggle them individually.
 - **Safe validation.** The file is checked to be valid JSON and to contain the required `MetaResources` array, with clear, friendly error messages otherwise.
-- **Full state preservation.** The whole file is parsed into memory and only the values you edit are ever modified: `Count` values inside `MetaResources` and entries in the `UnlockedFlags` list. Talents, `UserID`, `NextChrSlot`, `DataVersion`, and everything else pass through **unmodified**.
+- **Full state preservation.** The whole file is parsed into memory and only the values you edit are ever modified: `Count` values inside `MetaResources`, entries in the `UnlockedFlags` list, and `Talents` (via Completed Missions and Workshop Unlocks). `UserID`, `NextChrSlot`, `DataVersion`, stats, slots, and everything else pass through **unmodified**.
 - **Missing currencies are handled.** Any supported currency absent from your file is displayed as `0` and is injected (with the value you set) the moment you edit it.
-- **Quick tools.** Each currency has `+N`, `Set N`, and `Reset` helpers, where `N` is per-currency in the `MetaResources` key of `data.json` (defaults: +10,000 / Set 999,999).
+- **Quick tools.** Each currency has `+N`, `Set N`, and `Reset` helpers, where `N` is per-currency in the `MetaResources` key of `data.json` (defaults: +100 / Set 999,999).
 - **Unlock flag toggles.** A list of general account unlock flags (from `data.json`'s `General_Account_Unlocked_Flags`), each labeled with a human-readable description (looked up from its `Unlocked_Flags` catalogue). Toggling a flag on adds its value to `UnlockedFlags` (inserted at its sorted position); toggling it off removes it. Flags present in your file but absent from the catalogue are preserved untouched.
-- **Completed Missions.** Missions are grouped per map; marking one completed adds its talent RowName to `Talents` and any unlock flags it grants to `UnlockedFlags`, and unmarking removes both.
-- **Data-driven catalogues.** Currency names, the unlock-flag list, its descriptions, and the mission lists all live in the single `data.json` file in the project root, so entries can be added or removed per game update without touching the app code.
+- **Completed Missions.** Missions are grouped per map (shown as sub-tabs); marking one completed adds its talent RowName to `Talents` and any unlock flags it grants to `UnlockedFlags`, and unmarking removes both.
+- **Workshop Unlocks.** Workshop blueprints are grouped by category (shown as sub-tabs); toggling one on adds its talent RowName to `Talents` at rank 1, exactly the way mission talents are recorded, and toggling it off removes it.
+- **Data-driven catalogues.** Currency names, the unlock-flag list, its descriptions, the mission lists, and the workshop blueprint lists all live in the single `data.json` file in the project root, so entries can be added or removed per game update without touching the app code.
 - **Exact export.** Downloads a `Profile.json` (case-sensitive) serialized with 2-space indentation.
 
 ### Supported currencies
@@ -39,7 +45,7 @@ To preserve the intended experience, **consider saving this tool for bug recover
 
 ### Known unlock flags
 
-The **list of flags** shown under *Account Unlocks* comes from the `General_Account_Unlocked_Flags` key in `data.json` — a plain JSON array of flag values:
+The **list of flags** shown under *General Account Unlocks* comes from the `General_Account_Unlocked_Flags` key in `data.json` — a plain JSON array of flag values:
 
 ```json
 "General_Account_Unlocked_Flags": [ 3, 4, 95 ]
@@ -53,17 +59,37 @@ Each flag's **description** is looked up from `data.json`'s `Unlocked_Flags` cat
 | `4`        | Level 20 Boost Consumed (Promethius)     |
 | `95`       | Level 30 Boost Consumed (Elysium)        |
 
+### Workshop unlocks
+
+Workshop blueprints live in the `Workshop_Talents` key of `data.json`, grouped by category (currently **Envirosuits** and **Armor**). Each category maps a display name to a talent RowName, e.g.:
+
+```json
+"Workshop_Talents": {
+    "Envirosuits": {
+        "First Cohort": "Workshop_Deluxe_Envirosuit",
+        "Xigo S5-II": "Workshop_Envirosuit"
+    },
+    "Armor": {
+        "Naneo Head": "Workshop_Carbon_Head"
+    }
+}
+```
+
+Categories are ordered by `Workshop_Category_Weights` (ascending). Toggling a blueprint on adds its talent to the profile's `Talents` list at rank 1.
+
 ---
 
 ## Keeping the catalogues up to date
 
 All user-facing value lists live in the single `data.json` file in the project root — **edit it, commit, and push; no code changes needed.**
 
-- **`MetaResources`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `10000` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
-- **`General_Account_Unlocked_Flags`** — the list of toggleable general account flags shown under *Account Unlocks*. It is a plain JSON array of integer flag values: `[ 3, 4, 95 ]`. Add a value as a new flag is identified; remove one for a flag the game has retired.
-- **`Unlocked_Flags`** — the human-readable text behind unlock flags: an array of `{ "talent": <flag value>, "rewards": <display text> }`. The *Account Unlocks* labels and mission reward chips are resolved by matching a flag value to `talent` and using its `rewards`; a flag with no matching entry falls back to `Flag <value>`.
-- **`Mission_Talents`** — the *Completed Missions* list, keyed by map: `{ "<Map>": [ { "mission": <name>, "talent": <RowName>, "UnlockedFlags": [<flag values>] } ] }`. `UnlockedFlags` is optional — those flags are granted/revoked together with the mission's talent.
-- **`Map_Display_Weights`** — maps a map name to its sort position (ascending) in the *Completed Missions* list; maps without a weight sort last.
+- **`MetaResources`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `100` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
+- **`General_Account_Unlocked_Flags`** — the list of toggleable general account flags shown under *General Account Unlocks*. It is a plain JSON array of integer flag values: `[ 3, 4, 95 ]`. Add a value as a new flag is identified; remove one for a flag the game has retired.
+- **`Unlocked_Flags`** — the human-readable text behind unlock flags: an array of `{ "talent": <flag value>, "rewards": <display text> }`. The *General Account Unlocks* labels and mission reward chips are resolved by matching a flag value to `talent` and using its `rewards`; a flag with no matching entry falls back to `Flag <value>`.
+- **`Mission_Talents`** — the *Completed Missions* list, keyed by map (each map becomes a sub-tab): `{ "<Map>": [ { "mission": <name>, "talent": <RowName>, "UnlockedFlags": [<flag values>] } ] }`. `UnlockedFlags` is optional — those flags are granted/revoked together with the mission's talent.
+- **`Map_Display_Weights`** — maps a map name to its sort position (ascending) among the *Completed Missions* sub-tabs; maps without a weight sort last.
+- **`Workshop_Talents`** — the *Workshop Unlocks* list, keyed by category (each category becomes a sub-tab): `{ "<Category>": { "<Display name>": "<RowName>" } }`.
+- **`Workshop_Category_Weights`** — maps a category name to its sort position (ascending) among the *Workshop Unlocks* sub-tabs; categories without a weight sort last.
 
 ---
 
@@ -96,84 +122,19 @@ You can jump straight to the folder:
 
 - Copy the file somewhere safe (or rename it to `Profile.json.bak`) **before** you replace it with the edited version.
 - ICARUS does **not** lock `Profile.json`. Keep the game **running and on the title screen** when you overwrite the file — there's no need to close or restart it.
-- While this editor only touches `MetaResources` and `UnlockedFlags` and preserves everything else, a manual backup is still strongly recommended in case anything goes wrong.
+- While this editor only touches `MetaResources`, `UnlockedFlags`, and `Talents` and preserves everything else, a manual backup is still strongly recommended in case anything goes wrong.
 
 ### Workflow
 
 1. **Back up** your original `Profile.json`.
 2. Load it into the editor.
-3. Adjust the currency values you want.
+3. Use the tabs to adjust currency values, account unlock flags, completed missions, and workshop unlocks.
 4. Click **Download Profile.json**.
 5. Keep ICARUS **running and on the title screen** (the game doesn't lock the file — no need to close it).
 6. Overwrite your original `Profile.json` with the downloaded one.
 
 ---
 
-## Project layout
+## Copyright
 
-```
-icarus-profile-web-editor/
-├── index.html        # Semantic HTML5 layout (dropzone, editor sections, export)
-├── style.css         # Icarus-themed, responsive styling
-├── app.js            # File reading, parsing, validation, editing, export
-├── data.json         # Catalogues: currencies, unlock flags, missions, map weights
-├── README.md         # This file
-└── assets/
-    └── icon.png      # (optional) square app icon / tab favicon
-```
-
-> `data.json` holds only **catalogue metadata** — the player's `Profile.json` is always uploaded at runtime and never stored in the repository.
-
-### Adding the app icon
-
-Create an `assets/` folder in the project root and drop in:
-
-- `assets/icon.png` — a **square** icon used as the tab favicon and the header mark.
-
-If this file is missing, the app automatically falls back to a clean text monogram, so the site still looks correct with **no** images present.
-
----
-
-## Deploying to GitHub Pages
-
-This app is fully static, so GitHub Pages is all you need.
-
-### 1. Create a repository and push your code
-
-```bash
-git init
-git add .
-git commit -m "Add ICARUS Profile Editor"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo>.git
-git push -u origin main
-```
-
-### 2. Enable GitHub Pages
-
-1. Go to your repository on GitHub.
-2. Open **Settings** → **Pages**.
-3. Under **Build and deployment** → **Source**, select **Deploy from a branch**.
-4. For **Branch**, choose **`main`** and for **Folder** choose **`/ (root)`**.
-5. Click **Save**.
-
-### 3. Open your live site
-
-Wait a minute or two for the build to finish, then visit:
-
-```
-https://<your-username>.github.io/<your-repo>/
-```
-
-That's it — no build tools, no CI, no server required.
-
----
-
-## Technical notes
-
-- **State preservation:** the file is loaded with `JSON.parse`, held as a single in-memory object, and only `MetaResources` counts and `UnlockedFlags` entries are mutated. Export is `JSON.stringify(data, null, 2)`.
-- **Injection:** a missing `MetaRow` is appended to `MetaResources` as `{ "MetaRow": "<key>", "Count": <value> }` on first edit. A flag toggled on is inserted into `UnlockedFlags` at its sorted (ascending) position.
-- **Validation:** rejects non-JSON input, non-object roots, a missing `MetaResources` array, and malformed array entries — each with a specific message. A missing `UnlockedFlags` array is normalized to `[]` so toggles still work.
-- **Catalogues:** `data.json` in the project root is fetched at startup (relative URL, no CORS issues on GitHub Pages). If it is missing, the app shows a specific error instead of rendering an empty editor.
-- **Serving:** because the catalogue is fetched at runtime, the app must be served over HTTP(S) (GitHub Pages works out of the box). Opening `index.html` via `file://` will fail the catalogue fetch — the status line explains why.
-- **Privacy:** no network calls beyond the Google Fonts stylesheet and the same-origin `data.json` fetch; the save file is never transmitted.
+Copyright © 2026 Christopher Snow — aka Spafbi.

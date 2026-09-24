@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta
     name="description"
-    content="A lightweight, 100% client-side editor for ICARUS Profile.json save files. Modify meta-resources (Ren, Exotics, and more), toggle account unlock flags, and mark missions as completed to grant their talents — all entirely in your browser, no server, no upload."
+    content="A lightweight, 100% client-side editor for ICARUS Profile.json save files. Modify meta-resources (Ren, Exotics, and more), toggle account unlock flags, mark missions as completed, and unlock workshop blueprints — all entirely in your browser, no server, no upload."
   />
   <meta name="color-scheme" content="dark" />
+  <meta name="author" content="Christopher Snow (Spafbi)" />
   <title>ICARUS Profile Editor</title>
 
   <link rel="icon" type="image/png" href="assets/icon.png" />
@@ -83,15 +84,15 @@
 
       <p class="save-hint">
         Can't find it? On Windows your save lives at:<br />
-        <code>%LocalAppData%\Icarus\Saved\PlayerData\&lt;YourSteamID&gt;\Profile.json</code>.
+        <code>%LocalAppData%\\Icarus\\Saved\\PlayerData\\&lt;YourSteamID&gt;\\Profile.json</code>.
       </p>
       <p class="save-hint">
-        Press <kbd>Win</kbd> + <kbd>R</kbd>, paste <code>%LocalAppData%\Icarus\Saved\PlayerData</code>, then open the folder named with your <strong>Steam ID 64</strong>.
+        Press <kbd>Win</kbd> + <kbd>R</kbd>, paste <code>%LocalAppData%\\Icarus\\Saved\\PlayerData</code>, then open the folder named with your <strong>Steam ID 64</strong>.
       </p>
       <p id="status" class="status" role="status" aria-live="polite"></p>
     </section>
 
-    <!-- ============ EDITOR ============ -->
+    <!-- ============ EDITOR (tabbed) ============ -->
     <section
       class="panel editor-panel is-hidden"
       aria-labelledby="edit-heading"
@@ -101,43 +102,153 @@
         <div id="file-chip" class="file-chip" aria-live="polite"></div>
       </div>
 
-      <div class="editor-subsection">
-        <h3 id="meta-heading" class="subsection-title">Meta-Resources</h3>
-        <p class="subsection-desc">
-          Set in-game currency and resource counts.
-        </p>
+      <div
+        class="tab-bar"
+        role="tablist"
+        id="main-tab-bar"
+        aria-label="Profile editor sections"
+      >
+        <button
+          type="button"
+          role="tab"
+          id="tab-meta-resources"
+          class="tab-btn is-active"
+          data-tab-id="meta-resources"
+          aria-controls="panel-meta-resources"
+          aria-selected="true"
+          tabindex="0"
+        >
+          <span class="tab-label">Meta-Resources</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-account-unlocks"
+          class="tab-btn"
+          data-tab-id="account-unlocks"
+          aria-controls="panel-account-unlocks"
+          aria-selected="false"
+          tabindex="-1"
+        >
+          <span class="tab-label">General Account Unlocks</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-completed-missions"
+          class="tab-btn"
+          data-tab-id="completed-missions"
+          aria-controls="panel-completed-missions"
+          aria-selected="false"
+          tabindex="-1"
+        >
+          <span class="tab-label">Completed Missions</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-workshop-unlocks"
+          class="tab-btn"
+          data-tab-id="workshop-unlocks"
+          aria-controls="panel-workshop-unlocks"
+          aria-selected="false"
+          tabindex="-1"
+        >
+          <span class="tab-label">Workshop Unlocks</span>
+        </button>
       </div>
 
-      <div id="currency-grid" class="currency-grid"></div>
+      <div class="tab-panels" id="main-tab-panels">
+        <!-- Meta-Resources -->
+        <section
+          role="tabpanel"
+          class="tab-panel is-active"
+          id="panel-meta-resources"
+          aria-labelledby="tab-meta-resources"
+          data-tab-id="meta-resources"
+        >
+          <div class="editor-subsection">
+            <h3 id="meta-heading" class="subsection-title">Meta-Resources</h3>
+            <p class="subsection-desc">
+              Set in-game currency and resource counts.
+            </p>
+          </div>
 
-      <div class="editor-subsection">
-        <h3 id="unlocks-heading" class="subsection-title">General Account Unlocks</h3>
-        <p class="subsection-desc">
-          These are account-wide unlock flags you can modify. They are not tied
-          to specific missions.
-        </p>
+          <div id="currency-grid" class="currency-grid"></div>
+        </section>
+
+        <!-- General Account Unlocks -->
+        <section
+          role="tabpanel"
+          class="tab-panel"
+          id="panel-account-unlocks"
+          aria-labelledby="tab-account-unlocks"
+          data-tab-id="account-unlocks"
+          hidden
+        >
+          <div class="editor-subsection">
+            <h3 id="unlocks-heading" class="subsection-title">General Account Unlocks</h3>
+            <p class="subsection-desc">
+              These are account-wide unlock flags you can modify. They are not tied
+              to specific missions.
+            </p>
+          </div>
+
+          <div id="toggle-sections"></div>
+        </section>
+
+        <!-- Completed Missions (sub-tabbed by map) -->
+        <section
+          role="tabpanel"
+          class="tab-panel"
+          id="panel-completed-missions"
+          aria-labelledby="tab-completed-missions"
+          data-tab-id="completed-missions"
+          hidden
+        >
+          <div class="editor-subsection">
+            <h3 id="missions-heading" class="subsection-title">Completed Missions</h3>
+            <p class="subsection-desc">
+              Toggle missions as completed or not. Missions that also grant unlock
+              rewards show them under the name, and marking them completed grants
+              access to those rewards; most listed rewards are skill or workshop
+              blueprints access. Maps are organised into sub-tabs below.
+            </p>
+          </div>
+
+          <div id="missions-section"></div>
+        </section>
+
+        <!-- Workshop Unlocks (sub-tabbed by category) -->
+        <section
+          role="tabpanel"
+          class="tab-panel"
+          id="panel-workshop-unlocks"
+          aria-labelledby="tab-workshop-unlocks"
+          data-tab-id="workshop-unlocks"
+          hidden
+        >
+          <div class="editor-subsection">
+            <h3 id="workshop-heading" class="subsection-title">Workshop Unlocks</h3>
+            <p class="subsection-desc">
+              Unlock workshop blueprints by category. Toggling one on adds its
+              talent to your profile's <code>Talents</code> list (rank 1), the
+              same way mission talents are recorded. Categories are organised into
+              sub-tabs below.
+            </p>
+          </div>
+
+          <div id="workshop-section"></div>
+        </section>
       </div>
-
-      <div id="toggle-sections"></div>
-
-      <div class="editor-subsection">
-        <h3 id="missions-heading" class="subsection-title">Completed Missions</h3>
-        <p class="subsection-desc">
-          Toggle missions as completed or not. Missions that also grant unlock
-          rewards show them under the name, and marking them completed grants
-          access to those rewards; most listed rewards are skill or workshop
-          blueprints access.
-        </p>
-      </div>
-
-      <div id="missions-section"></div>
 
       <div class="export-bar">
         <div class="export-hints">
           <p class="export-hint">
             Changes stay on this machine. Only the values you edit —
             <code>MetaResources</code> counts, <code>UnlockedFlags</code>
-            entries, and <code>Talents</code> (via Completed Missions) — are
+            entries, and <code>Talents</code> (via Completed Missions and
+            Workshop Unlocks) — are
             modified; stats, slots, and everything else are preserved
             exactly as loaded.
           </p>
@@ -183,6 +294,18 @@
       with, sponsored by, or endorsed by RocketWerkz. All game assets and
       trademarks belong to RocketWerkz.
     </p>
+    <p class="project-link">
+      The project's home on GitHub — where the full source code lives. Browse
+      the code, report bugs or request features via its issue tracker, or star
+      the repository:
+      <a
+        href="https://github.com/Spafbi/icarus-profile-web-editor/"
+        target="_blank"
+        rel="noopener"
+        >github.com/Spafbi/icarus-profile-web-editor</a
+      >.
+    </p>
+    <p class="copyright">Copyright &copy; 2026 Christopher Snow — aka Spafbi.</p>
     <p class="fineprint">100% client-side · your save file never leaves your browser.</p>
   </footer>
 

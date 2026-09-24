@@ -24,7 +24,7 @@
   var EXPORT_FILENAME = "Profile.json";
   // Defaults applied when a MetaResources entry in data.json
   // omits the per-currency fields.
-  var DEFAULT_ADD_STEP = 10000;
+  var DEFAULT_ADD_STEP = 100;
   var DEFAULT_SET_MAX = 999999;
 
   // ---- State ----
@@ -57,8 +57,11 @@
   var currencyGrid = document.getElementById("currency-grid");
   var toggleSectionsEl = document.getElementById("toggle-sections");
   var missionsEl = document.getElementById("missions-section");
+  var workshopEl = document.getElementById("workshop-section");
   var downloadBtn = document.getElementById("download-btn");
   var toastEl = document.getElementById("toast");
+  var mainTabBar = document.getElementById("main-tab-bar");
+  var mainTabPanels = document.getElementById("main-tab-panels");
 
   /* ---------- Helpers ---------- */
   function clampCount(value) {
@@ -420,16 +423,217 @@
     return String(s).replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
 
+  // Apply one toggle row's on/off state to the row itself (checkbox +
+  // .is-on class) and to the underlying profile state. The row's data-*
+  // attributes decide which setters run; both setters are idempotent, so it
+  // is safe to call this for rows already in the target state. Shared by the
+  // delegated change handlers and the per-tab "toggle all" checkboxes.
+  function setRowToggled(input, enabled) {
+    input.checked = enabled;
+    var row = input.closest(".toggle-row");
+    if (row) row.classList.toggle("is-on", enabled);
+
+    if (input.hasAttribute("data-mission-talent")) {
+      setTalent(input.getAttribute("data-mission-talent"), enabled);
+      var flagParts = (input.getAttribute("data-mission-flags") || "").split(",").filter(Boolean);
+      for (var i = 0; i < flagParts.length; i++) {
+        var n = Number(flagParts[i]);
+        if (isFinite(n)) setFlagUnlocked(n, enabled);
+      }
+    } else if (input.hasAttribute("data-workshop-talent")) {
+      setTalent(input.getAttribute("data-workshop-talent"), enabled);
+    } else {
+      var value = Number(input.getAttribute("data-flag-value"));
+      if (isFinite(value)) setFlagUnlocked(value, enabled);
+    }
+  }
+
   function onToggleChange(e) {
     var input = e.target;
     if (!input || input.type !== "checkbox") return;
-    var value = Number(input.getAttribute("data-flag-value"));
-    if (!isFinite(value)) return;
-    setFlagUnlocked(value, input.checked);
-    var row = input.closest(".toggle-row");
-    if (row) row.classList.toggle("is-on", input.checked);
+    if (!input.hasAttribute("data-flag-value")) return;
+    setRowToggled(input, input.checked);
+    refreshTabStates(input);
   }
 
+  /* ---------- Editor tabs ---------- */
+  // A tab bar (role=tablist) is paired with a container of tab panels
+  // (role=tabpanel). The top-level editor sections and the per-map /
+  // per-category sub-tabs both reuse these two helpers; each bar is wired
+  // to its own panels container so the levels never interfere.
+  function activateTab(bar, panelsEl, tabId, focusTab) {
+    var btns = Array.prototype.slice.call(bar.querySelectorAll(".tab-btn"));
+    for (var i = 0; i < btns.length; i++) {
+      var selected = btns[i].getAttribute("data-tab-id") === tabId;
+      btns[i].classList.toggle("is-active", selected);
+      btns[i].setAttribute("aria-selected", selected ? "true" : "false");
+      btns[i].tabIndex = selected ? 0 : -1;
+    }
+    if (panelsEl) {
+      // Only the bar's own (direct child) panels: the sub-tab panels nested
+      // inside a top-level panel must not be toggled by the outer bar.
+      var panels = Array.prototype.slice.call(panelsEl.querySelectorAll("[role='tabpanel']"))
+        .filter(function (p) { return p.parentElement === panelsEl; });
+      for (var p = 0; p < panels.length; p++) {
+        var active = panels[p].getAttribute("data-tab-id") === tabId;
+        panels[p].classList.toggle("is-active", active);
+        if (active) panels[p].removeAttribute("hidden");
+        else panels[p].setAttribute("hidden", "");
+      }
+    }
+    if (focusTab) {
+      for (var f = 0; f < btns.length; f++) {
+        if (btns[f].getAttribute("data-tab-id") === tabId) {
+          btns[f].focus();
+          break;
+        }
+      }
+    }
+  }
+
+  // Attach click + arrow-key (Left/Right, Home/End) navigation to every tab
+  // button in a bar. The newly selected tab receives focus, following the
+  // WAI-ARIA tabs pattern.
+  function wireTabBar(bar, panelsEl) {
+    var btns = Array.prototype.slice.call(bar.querySelectorAll(".tab-btn"));
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          activateTab(bar, panelsEl, btn.getAttribute("data-tab-id"));
+        });
+        btn.addEventListener("keydown", function (e) {
+          var cur = btns.indexOf(btn);
+          var idx = -1;
+          if (e.key === "ArrowRight" || e.key === "ArrowDown") idx = (cur + 1) % btns.length;
+          else if (e.key === "ArrowLeft" || e.key === "ArrowUp") idx = (cur - 1 + btns.length) % btns.length;
+          else if (e.key === "Home") idx = 0;
+          else if (e.key === "End") idx = btns.length - 1;
+          else return;
+          e.preventDefault();
+          activateTab(bar, panelsEl, btns[idx].getAttribute("data-tab-id"), true);
+        });
+      })(btns[i]);
+    }
+  }
+
+  // Build the "toggle all" row that lives inside a tab group's panel —
+  // below its section title (where the panel has one) and above its toggle
+  // rows. `scopeLabel` names the scope (map / category / account unlocks)
+  // for the visible label; `panelId` identifies the panel. The wrapping
+  // <label> also lets the text itself activate the checkbox.
+  function buildSelectAllRow(scopeLabel, panelId) {
+    var row = makeElement("label", {
+      "class": "selectall-row",
+      "data-panel-id": panelId
+    });
+    row.appendChild(
+      makeElement("input", { type: "checkbox", "class": "tab-selectall" })
+    );
+    row.appendChild(makeElement("span", { text: "Toggle all " + scopeLabel }));
+    return row;
+  }
+
+  // The toggle rows belonging to one panel (the select-all checkbox is
+  // excluded: it carries its own class, not .toggle-input).
+  function panelToggleInputs(panel) {
+    return Array.prototype.slice.call(
+      panel.querySelectorAll('input.toggle-input[type="checkbox"]')
+    );
+  }
+
+  // Wire one panel's "toggle all" row to that panel's toggle rows. A click
+  // turns every row on — or all off, if they are already all on. The
+  // checkbox's own tri-state and the tab's count badge are recomputed from
+  // the rows afterwards, which is order-independent with respect to the
+  // engine's native checkbox toggle / change event sequencing.
+  function wireSelectAllRow(row, panel) {
+    var cb = row.querySelector("input.tab-selectall");
+    cb.addEventListener("click", function () {
+      var inputs = panelToggleInputs(panel);
+      if (!inputs.length) return;
+      var anyOff = false;
+      for (var k = 0; k < inputs.length; k++) {
+        if (!inputs[k].checked) { anyOff = true; break; }
+      }
+      var target = anyOff; // any off -> turn all on; else turn all off
+      for (var j = 0; j < inputs.length; j++) setRowToggled(inputs[j], target);
+      refreshSelectAllRow(cb, panel);
+    });
+    cb.addEventListener("change", function () {
+      refreshSelectAllRow(cb, panel);
+    });
+  }
+
+  // Recompute a panel's "toggle all" checkbox tri-state and — where its tab
+  // carries one — the "n / total" count badge, from the current row states.
+  function refreshSelectAllRow(cb, panel) {
+    var inputs = panelToggleInputs(panel);
+    var on = 0;
+    for (var k = 0; k < inputs.length; k++) if (inputs[k].checked) on++;
+    cb.checked = inputs.length > 0 && on === inputs.length;
+    cb.indeterminate = on > 0 && on < inputs.length;
+    if (panel.id) {
+      var btn = document.querySelector(
+        '[role="tab"][aria-controls="' + panel.id + '"]'
+      );
+      var badge = btn && btn.querySelector(".tab-count");
+      if (badge) badge.textContent = on + " / " + inputs.length;
+    }
+  }
+
+  // Entry point used by the delegated change handlers: update the
+  // "toggle all" row (and the tab badge) of the panel holding the row.
+  function refreshTabStates(input) {
+    var panel = input.closest('[role="tabpanel"]');
+    if (!panel) return;
+    var cb = panel.querySelector("input.tab-selectall");
+    if (cb) refreshSelectAllRow(cb, panel);
+  }
+
+  // Build one Completed Missions toggle row (switch + name + reward chips).
+  function buildMissionRow(mapName, mission) {
+    var checked = isTalentPresent(mission.talent);
+    var rowId = "mission-" + escapeId(mapName) + "-" + escapeId(mission.talent);
+    var row = makeElement("label", {
+      "class": "toggle-row" + (checked ? " is-on" : ""),
+      "for": rowId
+    });
+
+    var input = makeElement("input", {
+      id: rowId,
+      "class": "toggle-input",
+      type: "checkbox"
+    });
+    input.checked = checked;
+    input.setAttribute("data-mission-talent", mission.talent);
+    input.setAttribute("data-mission-flags", mission.flags.join(","));
+    row.appendChild(input);
+    row.appendChild(
+      makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
+    );
+
+    var text = makeElement("span", { "class": "toggle-text" });
+    text.appendChild(
+      makeElement("span", { "class": "toggle-desc", text: mission.name })
+    );
+
+    var rewards = missionRewardList(mission.flags);
+    if (rewards.length) {
+      var rewardsEl = makeElement("span", { "class": "mission-rewards" });
+      for (var r = 0; r < rewards.length; r++) {
+        rewardsEl.appendChild(
+          makeElement("span", { "class": "mission-reward", text: rewards[r] })
+        );
+      }
+      text.appendChild(rewardsEl);
+    }
+    row.appendChild(text);
+    return row;
+  }
+
+  // Render the Completed Missions section as a sub-tab bar: one tab per map
+  // (labelled with a "completed / total" count badge) and one panel per map
+  // holding that map's mission toggles. The first map is active on load.
   function renderCompletedMissions() {
     if (!missionsEl) return;
     missionsEl.textContent = "";
@@ -445,69 +649,71 @@
       return;
     }
 
+    var bar = makeElement("div", {
+      "class": "tab-bar tab-bar-sub",
+      role: "tablist",
+      "aria-label": "Completed missions by map"
+    });
+    var panelsEl = makeElement("div", { "class": "subtab-panels" });
+    var firstTabId = "";
+
     for (var g = 0; g < groups.length; g++) {
       var group = groups[g];
-      var mapBlock = makeElement("div", { "class": "map-group" });
-      mapBlock.setAttribute("data-map", group.map);
+      var key = escapeId(group.map) || ("map-" + g);
+      var tabId = "missions-tab-" + key;
+      var panelId = "missions-panel-" + key;
 
       var completed = 0;
       for (var m = 0; m < group.missions.length; m++) {
         if (isTalentPresent(group.missions[m].talent)) completed++;
       }
 
-      var title = makeElement("h4", { "class": "map-group-title", text: group.map });
-      title.appendChild(
+      var btn = makeElement("button", {
+        type: "button",
+        role: "tab",
+        id: tabId,
+        "aria-controls": panelId,
+        "class": "tab-btn",
+        "data-tab-id": panelId
+      });
+      btn.appendChild(makeElement("span", { "class": "tab-label", text: group.map }));
+      btn.appendChild(
         makeElement("span", {
-          "class": "map-group-count",
-          text: completed + " of " + group.missions.length + " completed"
+          "class": "tab-count",
+          text: completed + " / " + group.missions.length
         })
       );
-      mapBlock.appendChild(title);
+
+      bar.appendChild(btn);
+
+      var panel = makeElement("section", {
+        role: "tabpanel",
+        id: panelId,
+        "aria-labelledby": tabId,
+        "class": "tab-panel subtab-panel"
+      });
+      panel.setAttribute("data-tab-id", panelId);
+      if (!firstTabId) firstTabId = panelId;
+
+      // The "toggle all" row lives inside the panel (which has no section
+      // title), above the toggle rows.
+      var selectAllRow = buildSelectAllRow(group.map + " missions", panelId);
+      panel.appendChild(selectAllRow);
 
       var list = makeElement("div", { "class": "toggle-list" });
       for (var i = 0; i < group.missions.length; i++) {
-        var mission = group.missions[i];
-        var checked = isTalentPresent(mission.talent);
-        var rowId = "mission-" + escapeId(group.map) + "-" + escapeId(mission.talent);
-        var row = makeElement("label", {
-          "class": "toggle-row" + (checked ? " is-on" : ""),
-          "for": rowId
-        });
-
-        var input = makeElement("input", {
-          id: rowId,
-          "class": "toggle-input",
-          type: "checkbox"
-        });
-        input.checked = checked;
-        input.setAttribute("data-mission-talent", mission.talent);
-        input.setAttribute("data-mission-flags", mission.flags.join(","));
-        row.appendChild(input);
-        row.appendChild(
-          makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
-        );
-
-        var text = makeElement("span", { "class": "toggle-text" });
-        text.appendChild(
-          makeElement("span", { "class": "toggle-desc", text: mission.name })
-        );
-
-        var rewards = missionRewardList(mission.flags);
-        if (rewards.length) {
-          var rewardsEl = makeElement("span", { "class": "mission-rewards" });
-          for (var r = 0; r < rewards.length; r++) {
-            rewardsEl.appendChild(
-              makeElement("span", { "class": "mission-reward", text: rewards[r] })
-            );
-          }
-          text.appendChild(rewardsEl);
-        }
-        row.appendChild(text);
-        list.appendChild(row);
+        list.appendChild(buildMissionRow(group.map, group.missions[i]));
       }
-      mapBlock.appendChild(list);
-      missionsEl.appendChild(mapBlock);
+      panel.appendChild(list);
+      panelsEl.appendChild(panel);
+      wireSelectAllRow(selectAllRow, panel);
     }
+
+    missionsEl.appendChild(bar);
+    missionsEl.appendChild(panelsEl);
+
+    wireTabBar(bar, panelsEl);
+    activateTab(bar, panelsEl, firstTabId);
   }
 
   // One delegated handler for all Completed Missions toggles. Marking a
@@ -517,18 +723,178 @@
     var input = e.target;
     if (!input || input.type !== "checkbox") return;
     if (!input.hasAttribute("data-mission-talent")) return;
-    var talent = input.getAttribute("data-mission-talent");
-    var enabled = input.checked;
+    setRowToggled(input, input.checked);
+    refreshTabStates(input);
+  }
 
-    setTalent(talent, enabled);
-    var flagParts = (input.getAttribute("data-mission-flags") || "").split(",").filter(Boolean);
-    for (var i = 0; i < flagParts.length; i++) {
-      var n = Number(flagParts[i]);
-      if (isFinite(n)) setFlagUnlocked(n, enabled);
+  /* ---------- Workshop Unlocks catalogue ---------- */
+  // data.json's Workshop_Talents is an object keyed by category; each
+  // category maps a display name to a talent RowName. Toggling one on adds
+  // { RowName, Rank: 1 } to Talents, exactly like mission talents.
+  // Categories are sorted ascending by Workshop_Category_Weights, with
+  // first-seen order as the tie-break (mirrors the map groups).
+  function buildWorkshopGroups() {
+    var weights = (catalog && catalog.Workshop_Category_Weights) || {};
+    var byCategory = (catalog && typeof catalog.Workshop_Talents === "object" && catalog.Workshop_Talents)
+      ? catalog.Workshop_Talents
+      : {};
+
+    var groups = [];
+    var firstSeen = {};
+    var seq = 0;
+    for (var category in byCategory) {
+      if (!Object.prototype.hasOwnProperty.call(byCategory, category)) continue;
+      var talentsByDisplay = byCategory[category];
+      if (!talentsByDisplay || typeof talentsByDisplay !== "object") continue;
+
+      var talents = [];
+      var seen = {};
+      for (var name in talentsByDisplay) {
+        if (!Object.prototype.hasOwnProperty.call(talentsByDisplay, name)) continue;
+        var rowName = talentsByDisplay[name];
+        if (typeof rowName !== "string" || !rowName) continue;
+        if (seen[rowName]) continue; // guard against duplicate RowName entries
+        seen[rowName] = true;
+        talents.push({ name: name, talent: rowName });
+      }
+      if (talents.length) {
+        groups.push({ category: category, talents: talents });
+        firstSeen[category] = ++seq;
+      }
     }
 
-    var row = input.closest(".toggle-row");
-    if (row) row.classList.toggle("is-on", enabled);
+    groups.sort(function (a, b) {
+      var wa = isFinite(Number(weights[a.category])) ? Number(weights[a.category]) : Infinity;
+      var wb = isFinite(Number(weights[b.category])) ? Number(weights[b.category]) : Infinity;
+      if (wa !== wb) return wa - wb;
+      return firstSeen[a.category] - firstSeen[b.category];
+    });
+    return groups;
+  }
+
+  // Build one Workshop Unlocks toggle row (switch + blueprint name).
+  function buildWorkshopRow(category, talent) {
+    var checked = isTalentPresent(talent.talent);
+    var rowId = "workshop-" + escapeId(category) + "-" + escapeId(talent.talent);
+    var row = makeElement("label", {
+      "class": "toggle-row" + (checked ? " is-on" : ""),
+      "for": rowId
+    });
+
+    var input = makeElement("input", {
+      id: rowId,
+      "class": "toggle-input",
+      type: "checkbox"
+    });
+    input.checked = checked;
+    input.setAttribute("data-workshop-talent", talent.talent);
+    row.appendChild(input);
+    row.appendChild(
+      makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
+    );
+
+    var text = makeElement("span", { "class": "toggle-text" });
+    text.appendChild(
+      makeElement("span", { "class": "toggle-desc", text: talent.name })
+    );
+    row.appendChild(text);
+    return row;
+  }
+
+  // Render the Workshop Unlocks section as a sub-tab bar: one tab per
+  // category (labelled with an "unlocked / total" count badge) and one panel
+  // per category holding that category's blueprint toggles. The first
+  // category is active on load.
+  function renderWorkshopUnlocks() {
+    if (!workshopEl) return;
+    workshopEl.textContent = "";
+
+    var groups = buildWorkshopGroups();
+    if (!groups.length) {
+      workshopEl.appendChild(
+        makeElement("div", {
+          "class": "missions-empty",
+          text: "No workshop unlocks catalogued yet (data.json has no Workshop_Talents entries)."
+        })
+      );
+      return;
+    }
+
+    var bar = makeElement("div", {
+      "class": "tab-bar tab-bar-sub",
+      role: "tablist",
+      "aria-label": "Workshop unlocks by category"
+    });
+    var panelsEl = makeElement("div", { "class": "subtab-panels" });
+    var firstTabId = "";
+
+    for (var g = 0; g < groups.length; g++) {
+      var group = groups[g];
+      var key = escapeId(group.category) || ("cat-" + g);
+      var tabId = "workshop-tab-" + key;
+      var panelId = "workshop-panel-" + key;
+
+      var unlocked = 0;
+      for (var t = 0; t < group.talents.length; t++) {
+        if (isTalentPresent(group.talents[t].talent)) unlocked++;
+      }
+
+      var btn = makeElement("button", {
+        type: "button",
+        role: "tab",
+        id: tabId,
+        "aria-controls": panelId,
+        "class": "tab-btn",
+        "data-tab-id": panelId
+      });
+      btn.appendChild(makeElement("span", { "class": "tab-label", text: group.category }));
+      btn.appendChild(
+        makeElement("span", {
+          "class": "tab-count",
+          text: unlocked + " / " + group.talents.length
+        })
+      );
+
+      bar.appendChild(btn);
+
+      var panel = makeElement("section", {
+        role: "tabpanel",
+        id: panelId,
+        "aria-labelledby": tabId,
+        "class": "tab-panel subtab-panel"
+      });
+      panel.setAttribute("data-tab-id", panelId);
+      if (!firstTabId) firstTabId = panelId;
+
+      // The "toggle all" row lives inside the panel (which has no section
+      // title), above the toggle rows.
+      var selectAllRow = buildSelectAllRow(group.category + " blueprints", panelId);
+      panel.appendChild(selectAllRow);
+
+      var list = makeElement("div", { "class": "toggle-list" });
+      for (var i = 0; i < group.talents.length; i++) {
+        list.appendChild(buildWorkshopRow(group.category, group.talents[i]));
+      }
+      panel.appendChild(list);
+      panelsEl.appendChild(panel);
+      wireSelectAllRow(selectAllRow, panel);
+    }
+
+    workshopEl.appendChild(bar);
+    workshopEl.appendChild(panelsEl);
+
+    wireTabBar(bar, panelsEl);
+    activateTab(bar, panelsEl, firstTabId);
+  }
+
+  // One delegated handler for all Workshop Unlocks toggles: marking one on
+  // adds its talent RowName to Talents (Rank 1); unmarking removes it.
+  function onWorkshopToggleChange(e) {
+    var input = e.target;
+    if (!input || input.type !== "checkbox") return;
+    if (!input.hasAttribute("data-workshop-talent")) return;
+    setRowToggled(input, input.checked);
+    refreshTabStates(input);
   }
 
   function renderToggleSections() {
@@ -546,9 +912,11 @@
       "class": "toggle-block",
       id: "toggle-block-general-account"
     });
-    block.appendChild(
-      makeElement("h4", { "class": "toggle-block-title", text: "General Account Unlocks" })
-    );
+
+    // The "toggle all" row lives inside the panel: below the section title
+    // (the h3 in the panel's static markup) and above the flag rows.
+    var selectAllRow = buildSelectAllRow("general account unlocks", "panel-account-unlocks");
+    block.appendChild(selectAllRow);
 
     var list = makeElement("div", { "class": "toggle-list" });
     var seen = {};
@@ -592,6 +960,9 @@
     }
     block.appendChild(list);
     toggleSectionsEl.appendChild(block);
+
+    var panel = block.closest('[role="tabpanel"]');
+    if (panel) wireSelectAllRow(selectAllRow, panel);
   }
 
   /* ---------- Editing ---------- */
@@ -734,6 +1105,7 @@
     renderCurrencyCards();
     renderToggleSections();
     renderCompletedMissions();
+    renderWorkshopUnlocks();
     editorPanel.classList.remove("is-hidden");
     downloadBtn.disabled = false;
 
@@ -869,13 +1241,37 @@
       missionsEl.addEventListener("change", onMissionToggleChange);
     }
 
+    // Workshop Unlocks toggles — separate delegated listener.
+    if (workshopEl) {
+      workshopEl.addEventListener("change", onWorkshopToggleChange);
+    }
+
+    // Top-level editor tabs (Meta-Resources / General Account Unlocks /
+    // Completed Missions / Workshop Unlocks). The per-map and per-category
+    // sub-tab bars — and each tab group's "toggle all" row, which lives
+    // inside its panel — are wired inside their own render functions.
+    if (mainTabBar && mainTabPanels) {
+      wireTabBar(mainTabBar, mainTabPanels);
+    }
+
     // Fetch the external catalogue from data.json.
     boot();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
+  // init must run exactly once. The DOMContentLoaded listener is only
+  // registered while the document is still loading, but some environments
+  // (e.g. test harnesses that dispatch DOMContentLoaded manually) can fire
+  // it a second time; the guard keeps init idempotent either way.
+  var initRan = false;
+  function runInit() {
+    if (initRan) return;
+    initRan = true;
     init();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", runInit);
+  } else {
+    runInit();
   }
 })();
