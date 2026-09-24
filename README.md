@@ -20,8 +20,8 @@ To preserve the intended experience, **consider saving this tool for bug recover
 - **Full state preservation.** The whole file is parsed into memory and only the values you edit are ever modified: `Count` values inside `MetaResources` and entries in the `UnlockedFlags` list. Talents, `UserID`, `NextChrSlot`, `DataVersion`, and everything else pass through **unmodified**.
 - **Missing currencies are handled.** Any supported currency absent from your file is displayed as `0` and is injected (with the value you set) the moment you edit it.
 - **Quick tools.** Each currency has `+N`, `Set N`, and `Reset` helpers, where `N` is per-currency in `data/currency_map.json` (defaults: +10,000 / Set 999,999).
-- **Unlock flag toggles.** A list of known general account unlocks, each with a human-readable description. Toggling a flag on adds its `unlock_flag_value` to `UnlockedFlags` (inserted at its sorted position); toggling it off removes it. Flags present in your file but absent from the catalogue are preserved untouched.
-- **Data-driven catalogues.** Currency names and the unlock list live in external JSON files under `data/`, so entries can be added or removed per game update without touching the app code.
+- **Unlock flag toggles.** A list of general account unlock flags, each labeled with a human-readable description (looked up from `data/unlocked_flags.json`). Toggling a flag on adds its value to `UnlockedFlags` (inserted at its sorted position); toggling it off removes it. Flags present in your file but absent from the catalogue are preserved untouched.
+- **Data-driven catalogues.** Currency names, the unlock-flag list, and their descriptions live in external JSON files under `data/`, so entries can be added or removed per game update without touching the app code.
 - **Exact export.** Downloads a `Profile.json` (case-sensitive) serialized with 2-space indentation.
 
 ### Supported currencies
@@ -38,13 +38,19 @@ To preserve the intended experience, **consider saving this tool for bug recover
 
 ### Known unlock flags
 
-From `data/general_account_unlocks.json` (add or remove entries here as the game evolves):
+The **list of flags** shown under *Account Unlocks* comes from `data/general_account_unlocks.json` — a plain JSON array of flag values:
 
-| `unlock_flag_value` | Effect                                              |
-| ------------------- | --------------------------------------------------- |
-| `3`                 | Level 10 Boost Consumed (Styx Map Selection)        |
-| `4`                 | Level 20 Boost Consumed (Promethius Map Selection)  |
-| `95`                | Level 30 Boost Consumed (Elysium Map Selection)     |
+```json
+{ "UnlockedFlags": [ 3, 4, 95 ] }
+```
+
+Each flag's **description** is looked up from `data/unlocked_flags.json` by matching the flag value to that file's `talent`; the matching `rewards` text is what the UI displays. Add or remove flag values in `general_account_unlocks.json` as the game evolves, and add or edit the matching `talent` / `rewards` entries in `unlocked_flags.json` to change what is shown.
+
+| Flag value | Description (from `unlocked_flags.json`) |
+| ---------- | ---------------------------------------- |
+| `3`        | Level 10 Boost Consumed (Styx)           |
+| `4`        | Level 20 Boost Consumed (Promethius)     |
+| `95`       | Level 30 Boost Consumed (Elysium)        |
 
 ---
 
@@ -53,7 +59,8 @@ From `data/general_account_unlocks.json` (add or remove entries here as the game
 All user-facing value lists are external JSON files in `data/` — **edit them, commit, and push; no code changes needed.**
 
 - **`data/currency_map.json`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `10000` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
-- **`data/general_account_unlocks.json`** — the toggle list shown under *Account Unlocks*. Each item needs a `description` and an integer `unlock_flag_value` matching a value in your profile's `UnlockedFlags` array. Add entries as new flags are identified; remove entries for flags the game has retired.
+- **`data/general_account_unlocks.json`** — the list of toggleable general account flags shown under *Account Unlocks*. It is a plain JSON array of integer flag values: `{ "UnlockedFlags": [ 3, 4, 95 ] }`. Add a value as a new flag is identified; remove one for a flag the game has retired.
+- **`data/unlocked_flags.json`** — the human-readable text behind unlock flags: an array of `{ "talent": <flag value>, "mission": <mission name>, "rewards": <display text> }`. The *Account Unlocks* labels are resolved by matching a flag value to `talent` and using its `rewards`; a flag with no matching entry falls back to `Flag <value>`.
 - **Future catalogues** (missions, workshop unlocks, talents) will follow the same pattern: a JSON file under `data/` plus a small registration entry in `app.js`.
 
 ---
@@ -112,7 +119,8 @@ icarus-profile-web-editor/
 │   └── icon.png      # (optional) square app icon / tab favicon
 └── data/
     ├── currency_map.json           # name / addStep / setMax per currency
-    └── general_account_unlocks.json # Unlock flag catalogue (Account Unlocks)
+    ├── general_account_unlocks.json # list of general account flag values (Account Unlocks)
+    └── unlocked_flags.json          # unlock-flag catalogue: talent/mission/rewards (descriptions)
 ```
 
 > `data/` holds only **catalogue metadata** — the player's `Profile.json` is always uploaded at runtime and never stored in the repository.
@@ -167,6 +175,6 @@ That's it — no build tools, no CI, no server required.
 - **State preservation:** the file is loaded with `JSON.parse`, held as a single in-memory object, and only `MetaResources` counts and `UnlockedFlags` entries are mutated. Export is `JSON.stringify(data, null, 2)`.
 - **Injection:** a missing `MetaRow` is appended to `MetaResources` as `{ "MetaRow": "<key>", "Count": <value> }` on first edit. A flag toggled on is inserted into `UnlockedFlags` at its sorted (ascending) position.
 - **Validation:** rejects non-JSON input, non-object roots, a missing `MetaResources` array, and malformed array entries — each with a specific message. A missing `UnlockedFlags` array is normalized to `[]` so toggles still work.
-- **Catalogues:** `data/currency_map.json` and `data/general_account_unlocks.json` are fetched at startup (relative URLs, no CORS issues on GitHub Pages). If a catalogue is missing, the app shows a specific error instead of rendering an empty editor.
+- **Catalogues:** `data/currency_map.json`, `data/general_account_unlocks.json`, and `data/unlocked_flags.json` are fetched at startup (relative URLs, no CORS issues on GitHub Pages). If a catalogue is missing, the app shows a specific error instead of rendering an empty editor.
 - **Serving:** because the catalogues are fetched at runtime, the app must be served over HTTP(S) (GitHub Pages works out of the box). Opening `index.html` via `file://` will fail the catalogue fetch — the status line explains why.
 - **Privacy:** no network calls beyond the Google Fonts stylesheet and the same-origin `data/` fetches; the save file is never transmitted.

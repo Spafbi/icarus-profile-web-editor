@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta
     name="description"
-    content="A lightweight, 100% client-side editor for ICARUS Profile.json save files. Modify meta-resources (Ren, Exotics, and more) and toggle account unlock flags entirely in your browser — no server, no upload."
+    content="A lightweight, 100% client-side editor for ICARUS Profile.json save files. Modify meta-resources (Ren, Exotics, and more), toggle account unlock flags, and mark missions as completed to grant their talents — all entirely in your browser, no server, no upload."
   />
   <meta name="color-scheme" content="dark" />
   <title>ICARUS Profile Editor</title>
@@ -104,32 +104,42 @@
       <div class="editor-subsection">
         <h3 id="meta-heading" class="subsection-title">Meta-Resources</h3>
         <p class="subsection-desc">
-          Set in-game currency and resource counts directly. Values missing
-          from your file are injected the moment you edit them.
+          Set in-game currency and resource counts.
         </p>
       </div>
 
       <div id="currency-grid" class="currency-grid"></div>
 
       <div class="editor-subsection">
-        <h3 id="unlocks-heading" class="subsection-title">Account Unlocks</h3>
+        <h3 id="unlocks-heading" class="subsection-title">General Account Unlocks</h3>
         <p class="subsection-desc">
-          Toggle individual unlock flags in the profile's
-          <code>UnlockedFlags</code> list. Turning a flag on adds its value;
-          turning it off removes it. Flags not in the catalogue below are left
-          untouched.
+          These are account-wide unlock flags you can modify. They are not tied
+          to specific missions.
         </p>
       </div>
 
       <div id="toggle-sections"></div>
 
+      <div class="editor-subsection">
+        <h3 id="missions-heading" class="subsection-title">Completed Missions</h3>
+        <p class="subsection-desc">
+          Toggle missions as completed or not. Missions that also grant unlock
+          rewards show them under the name, and marking them completed grants
+          access to those rewards; most listed rewards are skill or workshop
+          blueprints access.
+        </p>
+      </div>
+
+      <div id="missions-section"></div>
+
       <div class="export-bar">
         <div class="export-hints">
           <p class="export-hint">
             Changes stay on this machine. Only the values you edit —
-            <code>MetaResources</code> counts and <code>UnlockedFlags</code>
-            entries — are modified; talents, stats, slots, and everything
-            else are preserved exactly as loaded.
+            <code>MetaResources</code> counts, <code>UnlockedFlags</code>
+            entries, and <code>Talents</code> (via Completed Missions) — are
+            modified; stats, slots, and everything else are preserved
+            exactly as loaded.
           </p>
           <p class="export-hint">
             To apply it, overwrite your original <code>Profile.json</code> with
