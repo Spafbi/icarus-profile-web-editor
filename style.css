@@ -403,7 +403,56 @@ kbd {
   background: rgba(0, 229, 255, 0.06);
 }
 
+/* ---------- Editor tabs ---------- */
+.tab-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 0 0 16px; padding: 5px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(10, 13, 18, 0.55), rgba(10, 13, 18, 0.3));
+}
+.tab-bar-sub { margin: 0 0 14px; }
+
+.tab-btn {
+  appearance: none; -webkit-appearance: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--display); font-weight: 600;
+  font-size: 0.82rem; letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid transparent; border-radius: calc(var(--radius-sm) - 2px);
+  padding: 8px 13px; cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.tab-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.035);
+  border-color: var(--border);
+}
+.tab-btn.is-active {
+  color: var(--cyan);
+  background: rgba(0, 229, 255, 0.07);
+  border-color: rgba(0, 229, 255, 0.35);
+  box-shadow: inset 0 0 14px rgba(0, 229, 255, 0.1);
+}
+.tab-label { white-space: nowrap; }
+
+/* Small "count / total" badge on sub-tab buttons (maps, categories). */
+.tab-count {
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 0.04em;
+  color: var(--text-faint);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-soft); border-radius: 999px;
+  padding: 1px 7px;
+}
+.tab-btn.is-active .tab-count { color: var(--cyan); border-color: rgba(0, 229, 255, 0.3); }
+
+.tab-panels { min-width: 0; }
+.tab-panel { display: none; }
+.tab-panel.is-active { display: block; }
+.subtab-panels { min-width: 0; }
+
 /* ---------- Export bar ---------- */
+
 .export-bar {
   margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border);
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px;
@@ -423,6 +472,10 @@ kbd {
 .disclaimer {
   margin: 0 auto 8px; max-width: 70ch; font-size: 0.82rem; color: var(--text-dim);
 }
+.copyright {
+  margin: 0 auto 8px; max-width: 70ch; font-size: 0.82rem; color: var(--text-dim);
+}
+.copyright strong { color: var(--text); }
 .fineprint {
   margin: 0; font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em;
   text-transform: uppercase; color: var(--text-faint);

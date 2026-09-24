@@ -60,6 +60,8 @@
   var workshopEl = document.getElementById("workshop-section");
   var downloadBtn = document.getElementById("download-btn");
   var toastEl = document.getElementById("toast");
+  var mainTabBar = document.getElementById("main-tab-bar");
+  var mainTabPanels = document.getElementById("main-tab-panels");
 
   /* ---------- Helpers ---------- */
   function clampCount(value) {
@@ -431,6 +433,107 @@
     if (row) row.classList.toggle("is-on", input.checked);
   }
 
+  /* ---------- Editor tabs ---------- */
+  // A tab bar (role=tablist) is paired with a container of tab panels
+  // (role=tabpanel). The top-level editor sections and the per-map /
+  // per-category sub-tabs both reuse these two helpers; each bar is wired
+  // to its own panels container so the levels never interfere.
+  function activateTab(bar, panelsEl, tabId, focusTab) {
+    var btns = Array.prototype.slice.call(bar.querySelectorAll(".tab-btn"));
+    for (var i = 0; i < btns.length; i++) {
+      var selected = btns[i].getAttribute("data-tab-id") === tabId;
+      btns[i].classList.toggle("is-active", selected);
+      btns[i].setAttribute("aria-selected", selected ? "true" : "false");
+      btns[i].tabIndex = selected ? 0 : -1;
+    }
+    if (panelsEl) {
+      var panels = Array.prototype.slice.call(panelsEl.querySelectorAll("[role='tabpanel']"));
+      for (var p = 0; p < panels.length; p++) {
+        var active = panels[p].getAttribute("data-tab-id") === tabId;
+        panels[p].classList.toggle("is-active", active);
+        if (active) panels[p].removeAttribute("hidden");
+        else panels[p].setAttribute("hidden", "");
+      }
+    }
+    if (focusTab) {
+      for (var f = 0; f < btns.length; f++) {
+        if (btns[f].getAttribute("data-tab-id") === tabId) {
+          btns[f].focus();
+          break;
+        }
+      }
+    }
+  }
+
+  // Attach click + arrow-key (Left/Right, Home/End) navigation to every tab
+  // button in a bar. The newly selected tab receives focus, following the
+  // WAI-ARIA tabs pattern.
+  function wireTabBar(bar, panelsEl) {
+    var btns = Array.prototype.slice.call(bar.querySelectorAll(".tab-btn"));
+    for (var i = 0; i < btns.length; i++) {
+      (function (btn) {
+        btn.addEventListener("click", function () {
+          activateTab(bar, panelsEl, btn.getAttribute("data-tab-id"));
+        });
+        btn.addEventListener("keydown", function (e) {
+          var cur = btns.indexOf(btn);
+          var idx = -1;
+          if (e.key === "ArrowRight" || e.key === "ArrowDown") idx = (cur + 1) % btns.length;
+          else if (e.key === "ArrowLeft" || e.key === "ArrowUp") idx = (cur - 1 + btns.length) % btns.length;
+          else if (e.key === "Home") idx = 0;
+          else if (e.key === "End") idx = btns.length - 1;
+          else return;
+          e.preventDefault();
+          activateTab(bar, panelsEl, btns[idx].getAttribute("data-tab-id"), true);
+        });
+      })(btns[i]);
+    }
+  }
+
+  // Build one Completed Missions toggle row (switch + name + reward chips).
+  function buildMissionRow(mapName, mission) {
+    var checked = isTalentPresent(mission.talent);
+    var rowId = "mission-" + escapeId(mapName) + "-" + escapeId(mission.talent);
+    var row = makeElement("label", {
+      "class": "toggle-row" + (checked ? " is-on" : ""),
+      "for": rowId
+    });
+
+    var input = makeElement("input", {
+      id: rowId,
+      "class": "toggle-input",
+      type: "checkbox"
+    });
+    input.checked = checked;
+    input.setAttribute("data-mission-talent", mission.talent);
+    input.setAttribute("data-mission-flags", mission.flags.join(","));
+    row.appendChild(input);
+    row.appendChild(
+      makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
+    );
+
+    var text = makeElement("span", { "class": "toggle-text" });
+    text.appendChild(
+      makeElement("span", { "class": "toggle-desc", text: mission.name })
+    );
+
+    var rewards = missionRewardList(mission.flags);
+    if (rewards.length) {
+      var rewardsEl = makeElement("span", { "class": "mission-rewards" });
+      for (var r = 0; r < rewards.length; r++) {
+        rewardsEl.appendChild(
+          makeElement("span", { "class": "mission-reward", text: rewards[r] })
+        );
+      }
+      text.appendChild(rewardsEl);
+    }
+    row.appendChild(text);
+    return row;
+  }
+
+  // Render the Completed Missions section as a sub-tab bar: one tab per map
+  // (labelled with a "completed / total" count badge) and one panel per map
+  // holding that map's mission toggles. The first map is active on load.
   function renderCompletedMissions() {
     if (!missionsEl) return;
     missionsEl.textContent = "";
@@ -446,69 +549,64 @@
       return;
     }
 
+    var bar = makeElement("div", {
+      "class": "tab-bar tab-bar-sub",
+      role: "tablist",
+      "aria-label": "Completed missions by map"
+    });
+    var panelsEl = makeElement("div", { "class": "subtab-panels" });
+    var firstTabId = "";
+
     for (var g = 0; g < groups.length; g++) {
       var group = groups[g];
-      var mapBlock = makeElement("div", { "class": "map-group" });
-      mapBlock.setAttribute("data-map", group.map);
+      var key = escapeId(group.map) || ("map-" + g);
+      var tabId = "missions-tab-" + key;
+      var panelId = "missions-panel-" + key;
 
       var completed = 0;
       for (var m = 0; m < group.missions.length; m++) {
         if (isTalentPresent(group.missions[m].talent)) completed++;
       }
 
-      var title = makeElement("h4", { "class": "map-group-title", text: group.map });
-      title.appendChild(
+      var btn = makeElement("button", {
+        type: "button",
+        role: "tab",
+        id: tabId,
+        "aria-controls": panelId,
+        "class": "tab-btn",
+        "data-tab-id": panelId
+      });
+      btn.appendChild(makeElement("span", { "class": "tab-label", text: group.map }));
+      btn.appendChild(
         makeElement("span", {
-          "class": "map-group-count",
-          text: completed + " of " + group.missions.length + " completed"
+          "class": "tab-count",
+          text: completed + " / " + group.missions.length
         })
       );
-      mapBlock.appendChild(title);
+      bar.appendChild(btn);
+
+      var panel = makeElement("section", {
+        role: "tabpanel",
+        id: panelId,
+        "aria-labelledby": tabId,
+        "class": "tab-panel subtab-panel"
+      });
+      panel.setAttribute("data-tab-id", panelId);
+      if (!firstTabId) firstTabId = panelId;
 
       var list = makeElement("div", { "class": "toggle-list" });
       for (var i = 0; i < group.missions.length; i++) {
-        var mission = group.missions[i];
-        var checked = isTalentPresent(mission.talent);
-        var rowId = "mission-" + escapeId(group.map) + "-" + escapeId(mission.talent);
-        var row = makeElement("label", {
-          "class": "toggle-row" + (checked ? " is-on" : ""),
-          "for": rowId
-        });
-
-        var input = makeElement("input", {
-          id: rowId,
-          "class": "toggle-input",
-          type: "checkbox"
-        });
-        input.checked = checked;
-        input.setAttribute("data-mission-talent", mission.talent);
-        input.setAttribute("data-mission-flags", mission.flags.join(","));
-        row.appendChild(input);
-        row.appendChild(
-          makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
-        );
-
-        var text = makeElement("span", { "class": "toggle-text" });
-        text.appendChild(
-          makeElement("span", { "class": "toggle-desc", text: mission.name })
-        );
-
-        var rewards = missionRewardList(mission.flags);
-        if (rewards.length) {
-          var rewardsEl = makeElement("span", { "class": "mission-rewards" });
-          for (var r = 0; r < rewards.length; r++) {
-            rewardsEl.appendChild(
-              makeElement("span", { "class": "mission-reward", text: rewards[r] })
-            );
-          }
-          text.appendChild(rewardsEl);
-        }
-        row.appendChild(text);
-        list.appendChild(row);
+        list.appendChild(buildMissionRow(group.map, group.missions[i]));
       }
-      mapBlock.appendChild(list);
-      missionsEl.appendChild(mapBlock);
+      panel.appendChild(list);
+      panelsEl.appendChild(panel);
     }
+
+    missionsEl.appendChild(bar);
+    missionsEl.appendChild(panelsEl);
+
+    wireTabBar(bar, panelsEl);
+    activateTab(bar, panelsEl, firstTabId);
   }
 
   // One delegated handler for all Completed Missions toggles. Marking a
@@ -577,6 +675,39 @@
     return groups;
   }
 
+  // Build one Workshop Unlocks toggle row (switch + blueprint name).
+  function buildWorkshopRow(category, talent) {
+    var checked = isTalentPresent(talent.talent);
+    var rowId = "workshop-" + escapeId(category) + "-" + escapeId(talent.talent);
+    var row = makeElement("label", {
+      "class": "toggle-row" + (checked ? " is-on" : ""),
+      "for": rowId
+    });
+
+    var input = makeElement("input", {
+      id: rowId,
+      "class": "toggle-input",
+      type: "checkbox"
+    });
+    input.checked = checked;
+    input.setAttribute("data-workshop-talent", talent.talent);
+    row.appendChild(input);
+    row.appendChild(
+      makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
+    );
+
+    var text = makeElement("span", { "class": "toggle-text" });
+    text.appendChild(
+      makeElement("span", { "class": "toggle-desc", text: talent.name })
+    );
+    row.appendChild(text);
+    return row;
+  }
+
+  // Render the Workshop Unlocks section as a sub-tab bar: one tab per
+  // category (labelled with an "unlocked / total" count badge) and one panel
+  // per category holding that category's blueprint toggles. The first
+  // category is active on load.
   function renderWorkshopUnlocks() {
     if (!workshopEl) return;
     workshopEl.textContent = "";
@@ -592,57 +723,64 @@
       return;
     }
 
+    var bar = makeElement("div", {
+      "class": "tab-bar tab-bar-sub",
+      role: "tablist",
+      "aria-label": "Workshop unlocks by category"
+    });
+    var panelsEl = makeElement("div", { "class": "subtab-panels" });
+    var firstTabId = "";
+
     for (var g = 0; g < groups.length; g++) {
       var group = groups[g];
-      var block = makeElement("div", { "class": "map-group" });
-      block.setAttribute("data-workshop-category", group.category);
+      var key = escapeId(group.category) || ("cat-" + g);
+      var tabId = "workshop-tab-" + key;
+      var panelId = "workshop-panel-" + key;
 
       var unlocked = 0;
       for (var t = 0; t < group.talents.length; t++) {
         if (isTalentPresent(group.talents[t].talent)) unlocked++;
       }
 
-      var title = makeElement("h4", { "class": "map-group-title", text: group.category });
-      title.appendChild(
+      var btn = makeElement("button", {
+        type: "button",
+        role: "tab",
+        id: tabId,
+        "aria-controls": panelId,
+        "class": "tab-btn",
+        "data-tab-id": panelId
+      });
+      btn.appendChild(makeElement("span", { "class": "tab-label", text: group.category }));
+      btn.appendChild(
         makeElement("span", {
-          "class": "map-group-count",
-          text: unlocked + " of " + group.talents.length + " unlocked"
+          "class": "tab-count",
+          text: unlocked + " / " + group.talents.length
         })
       );
-      block.appendChild(title);
+      bar.appendChild(btn);
+
+      var panel = makeElement("section", {
+        role: "tabpanel",
+        id: panelId,
+        "aria-labelledby": tabId,
+        "class": "tab-panel subtab-panel"
+      });
+      panel.setAttribute("data-tab-id", panelId);
+      if (!firstTabId) firstTabId = panelId;
 
       var list = makeElement("div", { "class": "toggle-list" });
       for (var i = 0; i < group.talents.length; i++) {
-        var talent = group.talents[i];
-        var checked = isTalentPresent(talent.talent);
-        var rowId = "workshop-" + escapeId(group.category) + "-" + escapeId(talent.talent);
-        var row = makeElement("label", {
-          "class": "toggle-row" + (checked ? " is-on" : ""),
-          "for": rowId
-        });
-
-        var input = makeElement("input", {
-          id: rowId,
-          "class": "toggle-input",
-          type: "checkbox"
-        });
-        input.checked = checked;
-        input.setAttribute("data-workshop-talent", talent.talent);
-        row.appendChild(input);
-        row.appendChild(
-          makeElement("span", { "class": "toggle-switch", "aria-hidden": "true" })
-        );
-
-        var text = makeElement("span", { "class": "toggle-text" });
-        text.appendChild(
-          makeElement("span", { "class": "toggle-desc", text: talent.name })
-        );
-        row.appendChild(text);
-        list.appendChild(row);
+        list.appendChild(buildWorkshopRow(group.category, group.talents[i]));
       }
-      block.appendChild(list);
-      workshopEl.appendChild(block);
+      panel.appendChild(list);
+      panelsEl.appendChild(panel);
     }
+
+    workshopEl.appendChild(bar);
+    workshopEl.appendChild(panelsEl);
+
+    wireTabBar(bar, panelsEl);
+    activateTab(bar, panelsEl, firstTabId);
   }
 
   // One delegated handler for all Workshop Unlocks toggles: marking one on
@@ -672,9 +810,6 @@
       "class": "toggle-block",
       id: "toggle-block-general-account"
     });
-    block.appendChild(
-      makeElement("h4", { "class": "toggle-block-title", text: "General Account Unlocks" })
-    );
 
     var list = makeElement("div", { "class": "toggle-list" });
     var seen = {};
@@ -999,6 +1134,13 @@
     // Workshop Unlocks toggles — separate delegated listener.
     if (workshopEl) {
       workshopEl.addEventListener("change", onWorkshopToggleChange);
+    }
+
+    // Top-level editor tabs (Meta-Resources / General Account Unlocks /
+    // Completed Missions / Workshop Unlocks). The per-map and per-category
+    // sub-tab bars are wired inside their own render functions.
+    if (mainTabBar && mainTabPanels) {
+      wireTabBar(mainTabBar, mainTabPanels);
     }
 
     // Fetch the external catalogue from data.json.
