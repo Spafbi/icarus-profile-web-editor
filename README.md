@@ -1,6 +1,6 @@
-# ICARUS Profile Editor
+# Spafbi's ICARUS Profile Editor
 
-A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) character save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — **toggle account unlock flags**, and **mark missions as completed** to grant their talents, all right in your browser.
+A lightweight, **100% client-side** web app for editing [ICARUS](https://store.steampowered.com/app/1149460/ICARUS/) (by RocketWerkz) profile save files. It lets you adjust the in-game **meta-resources** — Ren, Exotics, Respec Points, and more — **toggle account unlock flags**, and **mark missions as completed** to grant their talents, all right in your browser.
 
 Built with plain HTML, CSS, and vanilla JavaScript. No build step, no framework, no backend.
 
@@ -59,7 +59,7 @@ Each flag's **description** is looked up from `data.json`'s `Unlocked_Flags` cat
 
 All user-facing value lists live in the single `data.json` file in the project root — **edit it, commit, and push; no code changes needed.**
 
-- **`MetaResources`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `10000` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
+- **`MetaResources`** — one entry per currency: `{ "name": <display name>, "addStep": <amount added by the "+N" button>, "setMax": <value written by the "Set N" button> }`. Remove an entry to hide a currency from the UI (it will still pass through the file untouched); add an entry to expose a new one. `addStep` / `setMax` are optional and fall back to `100` / `999999`. The manual count field is not limited by these — existing counts above `setMax` are preserved.
 - **`General_Account_Unlocked_Flags`** — the list of toggleable general account flags shown under *Account Unlocks*. It is a plain JSON array of integer flag values: `[ 3, 4, 95 ]`. Add a value as a new flag is identified; remove one for a flag the game has retired.
 - **`Unlocked_Flags`** — the human-readable text behind unlock flags: an array of `{ "talent": <flag value>, "rewards": <display text> }`. The *Account Unlocks* labels and mission reward chips are resolved by matching a flag value to `talent` and using its `rewards`; a flag with no matching entry falls back to `Flag <value>`.
 - **`Mission_Talents`** — the *Completed Missions* list, keyed by map: `{ "<Map>": [ { "mission": <name>, "talent": <RowName>, "UnlockedFlags": [<flag values>] } ] }`. `UnlockedFlags` is optional — those flags are granted/revoked together with the mission's talent.
@@ -106,74 +106,3 @@ You can jump straight to the folder:
 4. Click **Download Profile.json**.
 5. Keep ICARUS **running and on the title screen** (the game doesn't lock the file — no need to close it).
 6. Overwrite your original `Profile.json` with the downloaded one.
-
----
-
-## Project layout
-
-```
-icarus-profile-web-editor/
-├── index.html        # Semantic HTML5 layout (dropzone, editor sections, export)
-├── style.css         # Icarus-themed, responsive styling
-├── app.js            # File reading, parsing, validation, editing, export
-├── data.json         # Catalogues: currencies, unlock flags, missions, map weights
-├── README.md         # This file
-└── assets/
-    └── icon.png      # (optional) square app icon / tab favicon
-```
-
-> `data.json` holds only **catalogue metadata** — the player's `Profile.json` is always uploaded at runtime and never stored in the repository.
-
-### Adding the app icon
-
-Create an `assets/` folder in the project root and drop in:
-
-- `assets/icon.png` — a **square** icon used as the tab favicon and the header mark.
-
-If this file is missing, the app automatically falls back to a clean text monogram, so the site still looks correct with **no** images present.
-
----
-
-## Deploying to GitHub Pages
-
-This app is fully static, so GitHub Pages is all you need.
-
-### 1. Create a repository and push your code
-
-```bash
-git init
-git add .
-git commit -m "Add ICARUS Profile Editor"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo>.git
-git push -u origin main
-```
-
-### 2. Enable GitHub Pages
-
-1. Go to your repository on GitHub.
-2. Open **Settings** → **Pages**.
-3. Under **Build and deployment** → **Source**, select **Deploy from a branch**.
-4. For **Branch**, choose **`main`** and for **Folder** choose **`/ (root)`**.
-5. Click **Save**.
-
-### 3. Open your live site
-
-Wait a minute or two for the build to finish, then visit:
-
-```
-https://<your-username>.github.io/<your-repo>/
-```
-
-That's it — no build tools, no CI, no server required.
-
----
-
-## Technical notes
-
-- **State preservation:** the file is loaded with `JSON.parse`, held as a single in-memory object, and only `MetaResources` counts and `UnlockedFlags` entries are mutated. Export is `JSON.stringify(data, null, 2)`.
-- **Injection:** a missing `MetaRow` is appended to `MetaResources` as `{ "MetaRow": "<key>", "Count": <value> }` on first edit. A flag toggled on is inserted into `UnlockedFlags` at its sorted (ascending) position.
-- **Validation:** rejects non-JSON input, non-object roots, a missing `MetaResources` array, and malformed array entries — each with a specific message. A missing `UnlockedFlags` array is normalized to `[]` so toggles still work.
-- **Catalogues:** `data.json` in the project root is fetched at startup (relative URL, no CORS issues on GitHub Pages). If it is missing, the app shows a specific error instead of rendering an empty editor.
-- **Serving:** because the catalogue is fetched at runtime, the app must be served over HTTP(S) (GitHub Pages works out of the box). Opening `index.html` via `file://` will fail the catalogue fetch — the status line explains why.
-- **Privacy:** no network calls beyond the Google Fonts stylesheet and the same-origin `data.json` fetch; the save file is never transmitted.
