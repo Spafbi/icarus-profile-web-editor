@@ -24,7 +24,7 @@
   var EXPORT_FILENAME = "Profile.json";
   // Defaults applied when a MetaResources entry in data.json
   // omits the per-currency fields.
-  var DEFAULT_ADD_STEP = 10000;
+  var DEFAULT_ADD_STEP = 100;
   var DEFAULT_SET_MAX = 999999;
 
   // ---- State ----
