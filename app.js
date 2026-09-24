@@ -423,14 +423,37 @@
     return String(s).replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
   }
 
+  // Apply one toggle row's on/off state to the row itself (checkbox +
+  // .is-on class) and to the underlying profile state. The row's data-*
+  // attributes decide which setters run; both setters are idempotent, so it
+  // is safe to call this for rows already in the target state. Shared by the
+  // delegated change handlers and the per-tab "toggle all" checkboxes.
+  function setRowToggled(input, enabled) {
+    input.checked = enabled;
+    var row = input.closest(".toggle-row");
+    if (row) row.classList.toggle("is-on", enabled);
+
+    if (input.hasAttribute("data-mission-talent")) {
+      setTalent(input.getAttribute("data-mission-talent"), enabled);
+      var flagParts = (input.getAttribute("data-mission-flags") || "").split(",").filter(Boolean);
+      for (var i = 0; i < flagParts.length; i++) {
+        var n = Number(flagParts[i]);
+        if (isFinite(n)) setFlagUnlocked(n, enabled);
+      }
+    } else if (input.hasAttribute("data-workshop-talent")) {
+      setTalent(input.getAttribute("data-workshop-talent"), enabled);
+    } else {
+      var value = Number(input.getAttribute("data-flag-value"));
+      if (isFinite(value)) setFlagUnlocked(value, enabled);
+    }
+  }
+
   function onToggleChange(e) {
     var input = e.target;
     if (!input || input.type !== "checkbox") return;
-    var value = Number(input.getAttribute("data-flag-value"));
-    if (!isFinite(value)) return;
-    setFlagUnlocked(value, input.checked);
-    var row = input.closest(".toggle-row");
-    if (row) row.classList.toggle("is-on", input.checked);
+    if (!input.hasAttribute("data-flag-value")) return;
+    setRowToggled(input, input.checked);
+    refreshTabStates(input);
   }
 
   /* ---------- Editor tabs ---------- */
@@ -447,7 +470,10 @@
       btns[i].tabIndex = selected ? 0 : -1;
     }
     if (panelsEl) {
-      var panels = Array.prototype.slice.call(panelsEl.querySelectorAll("[role='tabpanel']"));
+      // Only the bar's own (direct child) panels: the sub-tab panels nested
+      // inside a top-level panel must not be toggled by the outer bar.
+      var panels = Array.prototype.slice.call(panelsEl.querySelectorAll("[role='tabpanel']"))
+        .filter(function (p) { return p.parentElement === panelsEl; });
       for (var p = 0; p < panels.length; p++) {
         var active = panels[p].getAttribute("data-tab-id") === tabId;
         panels[p].classList.toggle("is-active", active);
@@ -488,6 +514,80 @@
         });
       })(btns[i]);
     }
+  }
+
+  // Build the "toggle all" row that lives inside a tab group's panel —
+  // below its section title (where the panel has one) and above its toggle
+  // rows. `scopeLabel` names the scope (map / category / account unlocks)
+  // for the visible label; `panelId` identifies the panel. The wrapping
+  // <label> also lets the text itself activate the checkbox.
+  function buildSelectAllRow(scopeLabel, panelId) {
+    var row = makeElement("label", {
+      "class": "selectall-row",
+      "data-panel-id": panelId
+    });
+    row.appendChild(
+      makeElement("input", { type: "checkbox", "class": "tab-selectall" })
+    );
+    row.appendChild(makeElement("span", { text: "Toggle all " + scopeLabel }));
+    return row;
+  }
+
+  // The toggle rows belonging to one panel (the select-all checkbox is
+  // excluded: it carries its own class, not .toggle-input).
+  function panelToggleInputs(panel) {
+    return Array.prototype.slice.call(
+      panel.querySelectorAll('input.toggle-input[type="checkbox"]')
+    );
+  }
+
+  // Wire one panel's "toggle all" row to that panel's toggle rows. A click
+  // turns every row on — or all off, if they are already all on. The
+  // checkbox's own tri-state and the tab's count badge are recomputed from
+  // the rows afterwards, which is order-independent with respect to the
+  // engine's native checkbox toggle / change event sequencing.
+  function wireSelectAllRow(row, panel) {
+    var cb = row.querySelector("input.tab-selectall");
+    cb.addEventListener("click", function () {
+      var inputs = panelToggleInputs(panel);
+      if (!inputs.length) return;
+      var anyOff = false;
+      for (var k = 0; k < inputs.length; k++) {
+        if (!inputs[k].checked) { anyOff = true; break; }
+      }
+      var target = anyOff; // any off -> turn all on; else turn all off
+      for (var j = 0; j < inputs.length; j++) setRowToggled(inputs[j], target);
+      refreshSelectAllRow(cb, panel);
+    });
+    cb.addEventListener("change", function () {
+      refreshSelectAllRow(cb, panel);
+    });
+  }
+
+  // Recompute a panel's "toggle all" checkbox tri-state and — where its tab
+  // carries one — the "n / total" count badge, from the current row states.
+  function refreshSelectAllRow(cb, panel) {
+    var inputs = panelToggleInputs(panel);
+    var on = 0;
+    for (var k = 0; k < inputs.length; k++) if (inputs[k].checked) on++;
+    cb.checked = inputs.length > 0 && on === inputs.length;
+    cb.indeterminate = on > 0 && on < inputs.length;
+    if (panel.id) {
+      var btn = document.querySelector(
+        '[role="tab"][aria-controls="' + panel.id + '"]'
+      );
+      var badge = btn && btn.querySelector(".tab-count");
+      if (badge) badge.textContent = on + " / " + inputs.length;
+    }
+  }
+
+  // Entry point used by the delegated change handlers: update the
+  // "toggle all" row (and the tab badge) of the panel holding the row.
+  function refreshTabStates(input) {
+    var panel = input.closest('[role="tabpanel"]');
+    if (!panel) return;
+    var cb = panel.querySelector("input.tab-selectall");
+    if (cb) refreshSelectAllRow(cb, panel);
   }
 
   // Build one Completed Missions toggle row (switch + name + reward chips).
@@ -583,6 +683,7 @@
           text: completed + " / " + group.missions.length
         })
       );
+
       bar.appendChild(btn);
 
       var panel = makeElement("section", {
@@ -594,12 +695,18 @@
       panel.setAttribute("data-tab-id", panelId);
       if (!firstTabId) firstTabId = panelId;
 
+      // The "toggle all" row lives inside the panel (which has no section
+      // title), above the toggle rows.
+      var selectAllRow = buildSelectAllRow(group.map + " missions", panelId);
+      panel.appendChild(selectAllRow);
+
       var list = makeElement("div", { "class": "toggle-list" });
       for (var i = 0; i < group.missions.length; i++) {
         list.appendChild(buildMissionRow(group.map, group.missions[i]));
       }
       panel.appendChild(list);
       panelsEl.appendChild(panel);
+      wireSelectAllRow(selectAllRow, panel);
     }
 
     missionsEl.appendChild(bar);
@@ -616,18 +723,8 @@
     var input = e.target;
     if (!input || input.type !== "checkbox") return;
     if (!input.hasAttribute("data-mission-talent")) return;
-    var talent = input.getAttribute("data-mission-talent");
-    var enabled = input.checked;
-
-    setTalent(talent, enabled);
-    var flagParts = (input.getAttribute("data-mission-flags") || "").split(",").filter(Boolean);
-    for (var i = 0; i < flagParts.length; i++) {
-      var n = Number(flagParts[i]);
-      if (isFinite(n)) setFlagUnlocked(n, enabled);
-    }
-
-    var row = input.closest(".toggle-row");
-    if (row) row.classList.toggle("is-on", enabled);
+    setRowToggled(input, input.checked);
+    refreshTabStates(input);
   }
 
   /* ---------- Workshop Unlocks catalogue ---------- */
@@ -757,6 +854,7 @@
           text: unlocked + " / " + group.talents.length
         })
       );
+
       bar.appendChild(btn);
 
       var panel = makeElement("section", {
@@ -768,12 +866,18 @@
       panel.setAttribute("data-tab-id", panelId);
       if (!firstTabId) firstTabId = panelId;
 
+      // The "toggle all" row lives inside the panel (which has no section
+      // title), above the toggle rows.
+      var selectAllRow = buildSelectAllRow(group.category + " blueprints", panelId);
+      panel.appendChild(selectAllRow);
+
       var list = makeElement("div", { "class": "toggle-list" });
       for (var i = 0; i < group.talents.length; i++) {
         list.appendChild(buildWorkshopRow(group.category, group.talents[i]));
       }
       panel.appendChild(list);
       panelsEl.appendChild(panel);
+      wireSelectAllRow(selectAllRow, panel);
     }
 
     workshopEl.appendChild(bar);
@@ -789,10 +893,8 @@
     var input = e.target;
     if (!input || input.type !== "checkbox") return;
     if (!input.hasAttribute("data-workshop-talent")) return;
-    setTalent(input.getAttribute("data-workshop-talent"), input.checked);
-
-    var row = input.closest(".toggle-row");
-    if (row) row.classList.toggle("is-on", input.checked);
+    setRowToggled(input, input.checked);
+    refreshTabStates(input);
   }
 
   function renderToggleSections() {
@@ -810,6 +912,11 @@
       "class": "toggle-block",
       id: "toggle-block-general-account"
     });
+
+    // The "toggle all" row lives inside the panel: below the section title
+    // (the h3 in the panel's static markup) and above the flag rows.
+    var selectAllRow = buildSelectAllRow("general account unlocks", "panel-account-unlocks");
+    block.appendChild(selectAllRow);
 
     var list = makeElement("div", { "class": "toggle-list" });
     var seen = {};
@@ -853,6 +960,9 @@
     }
     block.appendChild(list);
     toggleSectionsEl.appendChild(block);
+
+    var panel = block.closest('[role="tabpanel"]');
+    if (panel) wireSelectAllRow(selectAllRow, panel);
   }
 
   /* ---------- Editing ---------- */
@@ -1138,7 +1248,8 @@
 
     // Top-level editor tabs (Meta-Resources / General Account Unlocks /
     // Completed Missions / Workshop Unlocks). The per-map and per-category
-    // sub-tab bars are wired inside their own render functions.
+    // sub-tab bars — and each tab group's "toggle all" row, which lives
+    // inside its panel — are wired inside their own render functions.
     if (mainTabBar && mainTabPanels) {
       wireTabBar(mainTabBar, mainTabPanels);
     }
@@ -1147,9 +1258,20 @@
     boot();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
+  // init must run exactly once. The DOMContentLoaded listener is only
+  // registered while the document is still loading, but some environments
+  // (e.g. test harnesses that dispatch DOMContentLoaded manually) can fire
+  // it a second time; the guard keeps init idempotent either way.
+  var initRan = false;
+  function runInit() {
+    if (initRan) return;
+    initRan = true;
     init();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", runInit);
+  } else {
+    runInit();
   }
 })();

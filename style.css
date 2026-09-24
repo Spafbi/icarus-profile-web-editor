@@ -446,6 +446,21 @@ kbd {
 }
 .tab-btn.is-active .tab-count { color: var(--cyan); border-color: rgba(0, 229, 255, 0.3); }
 
+/* "Toggle all" row: lives inside a tab group's panel, below its section
+   title (where the panel has one) and above the toggle rows. */
+.selectall-row {
+  display: flex; align-items: center; gap: 7px;
+  margin: 0 0 10px;
+  font-size: 0.85rem; color: var(--text-dim);
+  cursor: pointer; user-select: none;
+}
+.selectall-row:hover { color: var(--text); }
+.selectall-row input[type="checkbox"] {
+  width: 13px; height: 13px; margin: 0; padding: 0;
+  flex: none; cursor: pointer;
+  accent-color: var(--cyan);
+}
+
 .tab-panels { min-width: 0; }
 .tab-panel { display: none; }
 .tab-panel.is-active { display: block; }
